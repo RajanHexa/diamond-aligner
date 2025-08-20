@@ -76,7 +76,7 @@ export default function AppTest() {
         if (!points || !aligned) return;
         const angleX = Utils.angleToEqualizeZ(points[0], points[1]);
         const deg = THREE.MathUtils.radToDeg(angleX);
-        setMachineRotaryR(deg);
+        setMachineRotaryR(270 - deg);
         Utils.animateRotation(modelGroupRef.current, angleX, 'x', () => {
             const updatedPoints = [...points];
             updatedPoints[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
@@ -85,7 +85,7 @@ export default function AppTest() {
             setTimeout(() => {
                 const angleZ = Utils.angleZToEqualizeX(points[0], points[1]);
                 const deg = THREE.MathUtils.radToDeg(angleZ);
-                setMachineRotaryW(deg);
+                setMachineRotaryW(90 - deg);
                 Utils.animateRotation(groupRef.current, angleZ, 'z');
             }, 1000);
         });
