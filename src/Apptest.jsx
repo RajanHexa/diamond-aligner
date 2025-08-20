@@ -118,6 +118,32 @@ export default function AppTest() {
             cameraControlsRef.current.saveState();
         }
     };
+    const handleFrontView = () => {
+        const box = new THREE.Box3();
+        if (model1) box.expandByObject(model1);
+        if (model2) box.expandByObject(model2);
+
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+        const distance = Math.max(size.x, size.y, size.z) * 50;
+        const from = center.clone().add(new THREE.Vector3(0, 0, distance));
+        const to = center;
+
+        if (cameraControlsRef.current) {
+            cameraControlsRef.current.setLookAt(
+                from.x, // Adjusted to match the offset used in the model
+                from.y,
+                from.z,
+                to.x,
+                to.y,
+                to.z,
+                true,
+            );
+            cameraControlsRef.current.saveState();
+        }
+    };
 
     const handleFileLoad = async (event, label) => {
         const file = event.target.files[0];
@@ -245,6 +271,7 @@ export default function AppTest() {
                 {/* Right side button */}
                 <div>
                     <button onClick={handleFitToView}>Top View</button>
+                    <button onClick={handleFrontView}>Front View</button>
                 </div>
             </div>
 
