@@ -454,7 +454,6 @@ export default function App() {
                 <directionalLight position={[10, 10, 10]} intensity={0.8} />
                 <directionalLight position={[-10, 10, -10]} intensity={0.6} />
                 <CameraControls ref={cameraControlsRef} />
-
                 {glbSceneRef.current && (
                     <TransformControls
                         ref={transformControlsRef}
@@ -506,7 +505,6 @@ export default function App() {
                         position={planeSelections.plane1.position}
                     />
                 )}
-                <axesHelper args={[5000]} />
             </Canvas>
         </div>
     );

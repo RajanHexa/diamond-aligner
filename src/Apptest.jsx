@@ -1,9 +1,8 @@
 import { Canvas } from '@react-three/fiber';
-import Viewer3D from './Viewer3D';
 import { useEffect, useRef, useState } from 'react';
 import LoadModel from './ModelLoader';
 import { Utils } from './Utils';
-import { CameraControls } from '@react-three/drei';
+import { CameraControls, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { FaceExtractor } from './FaceExtractor';
 import { ClipPlane } from './ClipPlane';
@@ -98,7 +97,6 @@ export default function AppTest() {
         if (model1) box.expandByObject(model1);
         if (model2) box.expandByObject(model2);
 
-        handleModelLoaded(box);
         const size = new THREE.Vector3();
         box.getSize(size);
         const center = new THREE.Vector3();
@@ -109,10 +107,10 @@ export default function AppTest() {
 
         if (cameraControlsRef.current) {
             cameraControlsRef.current.setLookAt(
-                from.x - 7500, // Adjusted to match the offset used in the model
+                from.x, // Adjusted to match the offset used in the model
                 from.y,
                 from.z,
-                to.x - 7500,
+                to.x,
                 to.y,
                 to.z,
                 true,
@@ -129,18 +127,14 @@ export default function AppTest() {
             const model = await Utils.loadObjModel(url);
 
             if (label === 'Model 1') {
-                model.geometry.applyMatrix4(
-                    new THREE.Matrix4().makeRotationX(-Math.PI / 2),
-                );
+                model.geometry.rotateY(Math.PI);
                 setModel1(model);
                 const midPlane = FaceExtractor.extractMidPlane(model);
                 setMidPlane1(midPlane);
             }
 
             if (label === 'Model 2') {
-                model.geometry.applyMatrix4(
-                    new THREE.Matrix4().makeRotationX(-Math.PI / 2),
-                );
+                model.geometry.rotateY(Math.PI);
                 setModel2(model);
                 const midPlane = FaceExtractor.extractMidPlane(model);
                 setMidPlane2(midPlane);
@@ -189,7 +183,7 @@ export default function AppTest() {
             if (fixtureRef.current) box.expandByObject(fixtureRef.current);
             if (model1) box.expandByObject(model1);
             if (model2) box.expandByObject(model2);
-            handleModelLoaded(box);
+            handleFitToView();
         }
     }, [model1, model2]);
 
@@ -246,14 +240,14 @@ export default function AppTest() {
 
                 {/* Right side button */}
                 <div>
-                    <button onClick={handleFitToView}>Fit to View</button>
+                    <button onClick={handleFitToView}>Top View</button>
                 </div>
             </div>
 
             <Canvas
                 orthographic
                 camera={{
-                    zoom: 0.05,
+                    zoom: 0.1,
                     near: nearFar.near,
                     far: nearFar.far,
                     position: [0, 0, 0], // start away from origin
@@ -262,23 +256,44 @@ export default function AppTest() {
                     top: window.innerHeight / 2,
                     bottom: -window.innerHeight / 2,
                 }}>
+                <axesHelper args={[10000]} />
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[10, 10, 10]} intensity={0.8} />
                 <directionalLight position={[-10, 10, -10]} intensity={0.6} />
+                <Environment preset="city" />
                 {/* <Viewer3D cameraRef={cameraControlsRef} /> */}
                 <CameraControls ref={cameraControlsRef} makeDefault />
                 <group ref={groupRef}>
                     <group ref={modelGroupRef}>
                         {model1 && <LoadModel mesh={model1} />}
                         {model2 && <LoadModel mesh={model2} />}
+                        <group ref={fixtureRef}>
+                            <mesh position={[-6000, 0, 0]}>
+                                <boxGeometry
+                                    attach="geometry"
+                                    args={[8000, 5000, 5000]}
+                                />
+                                <meshPhysicalMaterial
+                                    transparent
+                                    opacity={0.4}
+                                    attach="material"
+                                    color={0xff0000}
+                                />
+                            </mesh>
+                            <mesh position={[-6000, 0, 2750]}>
+                                <boxGeometry
+                                    attach="geometry"
+                                    args={[8000, 1000, 500]}
+                                />
+                                <meshPhysicalMaterial
+                                    transparent
+                                    opacity={0.4}
+                                    attach="material"
+                                    color={0x0000ff}
+                                />
+                            </mesh>
+                        </group>
                     </group>
-                    <mesh position={[-7000, 0, 0]} ref={fixtureRef}>
-                        <boxGeometry
-                            attach="geometry"
-                            args={[3000, 3000, 3000]}
-                        />
-                        <meshPhysicalMaterial attach="material" color="white" />
-                    </mesh>
                 </group>
             </Canvas>
         </div>
