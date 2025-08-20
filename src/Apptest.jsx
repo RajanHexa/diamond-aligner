@@ -234,8 +234,12 @@ export default function AppTest() {
                         style={{ display: 'none' }}
                         onChange={(e) => handleFileLoad(e, 'Model 2')}
                     />
-                    <div>Rotation R: {machineRotaryR || '-'}</div>
-                    <div>Rotation W: {machineRotaryW || '-'}</div>
+                    <div style={{ marginTop: '10px', marginLeft: '10px' }}>
+                        {' '}
+                        {/* 👈 gap added here */}
+                        <div>Rotation R: {machineRotaryR || '-'}</div>
+                        <div>Rotation W: {machineRotaryW || '-'}</div>
+                    </div>
                 </div>
 
                 {/* Right side button */}
@@ -271,7 +275,7 @@ export default function AppTest() {
                             <mesh position={[-6000, 0, 0]}>
                                 <boxGeometry
                                     attach="geometry"
-                                    args={[8000, 5000, 5000]}
+                                    args={[7000, 3000, 3000]}
                                 />
                                 <meshPhysicalMaterial
                                     transparent
@@ -280,10 +284,10 @@ export default function AppTest() {
                                     color={0xff0000}
                                 />
                             </mesh>
-                            <mesh position={[-6000, 0, 2750]}>
+                            <mesh position={[-6000, 0, 1750]}>
                                 <boxGeometry
                                     attach="geometry"
-                                    args={[8000, 1000, 500]}
+                                    args={[7000, 1000, 500]}
                                 />
                                 <meshPhysicalMaterial
                                     transparent
