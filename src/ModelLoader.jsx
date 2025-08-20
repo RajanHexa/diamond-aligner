@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-const LoadModel = ({ mesh }) => {
+const LoadModel = ({ mesh, color }) => {
+    mesh.material.color.set(color);
     return mesh ? <primitive object={mesh} dispose={null} /> : null;
 };
 

@@ -8,117 +8,103 @@ export class FaceExtractor {
      * @param {number} epsilon - Tolerance for planarity check
      * @returns {Array<Array<number>>} - Array of face groups (each group is a list of face indices)
      */
-    static extractFaces(mesh, epsilon = 1e-4) {
-        let geometry = mesh.geometry;
+    static extractCoplanarGroups(mesh, epsilon = 1e-4) {
+        let geometry = mesh.geometry.clone();
         geometry = mergeVertices(geometry);
         mesh.geometry = geometry;
         geometry.computeVertexNormals();
-        geometry.computeBoundingBox();
 
-        if (!geometry.index) {
-            console.error(
-                'Mesh must be indexed geometry (BufferGeometry with index).',
-            );
-            return [];
+        const posAttr = geometry.attributes.position;
+        const indexAttr = geometry.index.array;
+
+        const triangleCount = indexAttr.length / 3;
+
+        // Precompute triangle data (verts + normal + area)
+        const triangles = [];
+        const triNormals = [];
+        const triAreas = [];
+
+        for (let i = 0; i < triangleCount; i++) {
+            const a = indexAttr[i * 3];
+            const b = indexAttr[i * 3 + 1];
+            const c = indexAttr[i * 3 + 2];
+
+            const vA = new THREE.Vector3().fromBufferAttribute(posAttr, a);
+            const vB = new THREE.Vector3().fromBufferAttribute(posAttr, b);
+            const vC = new THREE.Vector3().fromBufferAttribute(posAttr, c);
+
+            const ab = new THREE.Vector3().subVectors(vB, vA);
+            const ac = new THREE.Vector3().subVectors(vC, vA);
+
+            const normal = new THREE.Vector3().crossVectors(ab, ac).normalize();
+            const area = 0.5 * ab.cross(ac).length(); // triangle area
+
+            triangles.push([a, b, c]);
+            triNormals.push(normal);
+            triAreas.push(area);
         }
 
-        const positions = geometry.attributes.position.array;
-        const indices = geometry.index.array;
-        const faceNormals = [];
-
-        // Compute face normals
-        for (let i = 0; i < indices.length; i += 3) {
-            const a = indices[i],
-                b = indices[i + 1],
-                c = indices[i + 2];
-            const vA = new THREE.Vector3().fromArray(positions, a * 3);
-            const vB = new THREE.Vector3().fromArray(positions, b * 3);
-            const vC = new THREE.Vector3().fromArray(positions, c * 3);
-
-            const cb = new THREE.Vector3().subVectors(vC, vB);
-            const ab = new THREE.Vector3().subVectors(vA, vB);
-            const normal = new THREE.Vector3().crossVectors(cb, ab).normalize();
-
-            faceNormals.push(normal);
+        // Build adjacency (triangle -> neighbors)
+        const vertexToTriangles = new Map();
+        for (let i = 0; i < triangleCount; i++) {
+            for (const v of triangles[i]) {
+                if (!vertexToTriangles.has(v)) vertexToTriangles.set(v, []);
+                vertexToTriangles.get(v).push(i);
+            }
         }
 
-        // Build adjacency
-        const faceNeighbors = Array(faceNormals.length)
-            .fill(null)
-            .map(() => []);
-        const edgeMap = new Map();
-        function edgeKey(i1, i2) {
-            return i1 < i2 ? `${i1}_${i2}` : `${i2}_${i1}`;
-        }
-
-        for (let i = 0; i < indices.length; i += 3) {
-            const faceIdx = i / 3;
-            const face = [indices[i], indices[i + 1], indices[i + 2]];
-            for (let e = 0; e < 3; e++) {
-                const a = face[e],
-                    b = face[(e + 1) % 3];
-                const key = edgeKey(a, b);
-
-                if (edgeMap.has(key)) {
-                    const otherFace = edgeMap.get(key);
-                    faceNeighbors[faceIdx].push(otherFace);
-                    faceNeighbors[otherFace].push(faceIdx);
-                } else {
-                    edgeMap.set(key, faceIdx);
+        const neighbors = new Map();
+        for (let i = 0; i < triangleCount; i++) {
+            neighbors.set(i, new Set());
+            for (const v of triangles[i]) {
+                for (const nb of vertexToTriangles.get(v)) {
+                    if (nb !== i) neighbors.get(i).add(nb);
                 }
             }
         }
 
-        // DFS to group coplanar faces
-        const visited = new Array(faceNormals.length).fill(false);
-        const planarGroups = [];
+        // BFS for coplanar groups
+        const visited = new Array(triangleCount).fill(false);
+        const groups = [];
 
-        function isCoplanar(n1, n2) {
-            return n1.dot(n2) > 1 - epsilon;
-        }
+        for (let i = 0; i < triangleCount; i++) {
+            if (visited[i]) continue;
 
-        function triangleArea(a, b, c) {
-            const ab = new THREE.Vector3().subVectors(b, a);
-            const ac = new THREE.Vector3().subVectors(c, a);
-            return new THREE.Vector3().crossVectors(ab, ac).length() * 0.5;
-        }
+            const group = { faces: [], area: 0 };
+            const queue = [i];
 
-        for (let f = 0; f < faceNormals.length; f++) {
-            if (visited[f]) continue;
+            while (queue.length > 0) {
+                const cur = queue.pop();
+                if (visited[cur]) continue;
+                visited[cur] = true;
 
-            const group = [];
-            let totalArea = 0;
-            const stack = [f];
-            visited[f] = true;
+                group.faces.push(cur);
+                group.area += triAreas[cur];
 
-            while (stack.length) {
-                const curr = stack.pop();
-                group.push(curr);
-
-                // area of this face
-                const i0 = indices[curr * 3],
-                    i1 = indices[curr * 3 + 1],
-                    i2 = indices[curr * 3 + 2];
-                const v0 = new THREE.Vector3().fromArray(positions, i0 * 3);
-                const v1 = new THREE.Vector3().fromArray(positions, i1 * 3);
-                const v2 = new THREE.Vector3().fromArray(positions, i2 * 3);
-                totalArea += triangleArea(v0, v1, v2);
-
-                for (const neigh of faceNeighbors[curr]) {
-                    if (
-                        !visited[neigh] &&
-                        isCoplanar(faceNormals[curr], faceNormals[neigh])
-                    ) {
-                        visited[neigh] = true;
-                        stack.push(neigh);
+                for (const nb of neighbors.get(cur)) {
+                    if (!visited[nb]) {
+                        // Check if coplanar
+                        if (triNormals[cur].dot(triNormals[nb]) > 1 - epsilon) {
+                            const vA = new THREE.Vector3().fromBufferAttribute(
+                                posAttr,
+                                triangles[cur][0],
+                            );
+                            const vN = triNormals[cur];
+                            const vB = new THREE.Vector3().fromBufferAttribute(
+                                posAttr,
+                                triangles[nb][0],
+                            );
+                            const dist = Math.abs(vN.dot(vB.clone().sub(vA)));
+                            if (dist < epsilon) {
+                                queue.push(nb);
+                            }
+                        }
                     }
                 }
             }
-
-            planarGroups.push({ group, area: totalArea });
+            groups.push(group);
         }
-
-        return planarGroups;
+        return groups;
     }
 
     /**
@@ -128,7 +114,7 @@ export class FaceExtractor {
      * @returns {Array<Array<number>>}
      */
     static extractLargestFaces(mesh, n = 2) {
-        return this.extractFaces(mesh)
+        return this.extractCoplanarGroups(mesh)
             .sort((a, b) => b.area - a.area)
             .slice(0, n);
     }
@@ -282,8 +268,8 @@ export class FaceExtractor {
         const faces = this.extractLargestFaces(mesh, 2);
         if (faces.length < 2) return null;
 
-        const planeA = this.computePlaneFromFace(mesh, faces[0].group);
-        const planeB = this.computePlaneFromFace(mesh, faces[1].group);
+        const planeA = this.computePlaneFromFace(mesh, faces[0].faces);
+        const planeB = this.computePlaneFromFace(mesh, faces[1].faces);
         const planeInstanceA = new THREE.Plane().setFromNormalAndCoplanarPoint(
             planeA.normal,
             planeA.centroid,

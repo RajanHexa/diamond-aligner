@@ -23,6 +23,8 @@ export default function AppTest() {
     const [points, setPoints] = useState(null);
     const [machineRotaryR, setMachineRotaryR] = useState(null);
     const [machineRotaryW, setMachineRotaryW] = useState(null);
+    // const [geometry1, setGeometry1] = useState(null);
+    // const [geometry2, setGeometry2] = useState(null);
 
     const handleApply = () => {
         if (midPlane1 && midPlane2) {
@@ -155,6 +157,12 @@ export default function AppTest() {
             if (label === 'Model 1') {
                 model.geometry.rotateY(Math.PI);
                 setModel1(model);
+                // const faces = FaceExtractor.extractLargestFaces(model, 2);
+                // const geometry = FaceExtractor.buildGeometryFromFace(
+                //     model,
+                //     faces[0].faces,
+                // );
+                // setGeometry1(geometry);
                 const midPlane = FaceExtractor.extractMidPlane(model);
                 setMidPlane1(midPlane);
             }
@@ -315,8 +323,8 @@ export default function AppTest() {
                 )} */}
                 <group ref={groupRef}>
                     <group ref={modelGroupRef}>
-                        {model1 && <LoadModel mesh={model1} />}
-                        {model2 && <LoadModel mesh={model2} />}
+                        {model1 && <LoadModel mesh={model1} color={0x00ff00} />}
+                        {model2 && <LoadModel mesh={model2} color={0x000ff0} />}
                         <group ref={fixtureRef}>
                             <mesh position={[-6000, 0, 0]}>
                                 <boxGeometry
