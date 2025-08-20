@@ -9,6 +9,7 @@ import {
 import * as THREE from 'three';
 import { ClipPlane } from './ClipPlane';
 import { Utils } from './Utils';
+import { FaceExtractor } from './FaceExtractor';
 
 function GLBModel({
     activePlane,
@@ -21,6 +22,7 @@ function GLBModel({
     const meshRefs = useRef([]);
     const helperRefs = useRef({ plane1: null, plane2: null });
     const { scene, camera, mouse, raycaster } = useThree();
+    const [geometryFace, setGeometryFace] = useState(null);
 
     useEffect(() => {
         meshRefs.current = [];
@@ -41,7 +43,7 @@ function GLBModel({
             }
         });
 
-        gltf.scene.rotation.y = Math.PI;
+        // gltf.scene.rotation.y = Math.PI;
 
         if (onModelLoaded && modelRef.current) {
             const box = new THREE.Box3().setFromObject(modelRef.current);
@@ -88,6 +90,9 @@ function GLBModel({
         e.stopPropagation();
 
         const mesh = e.object;
+        const faces = FaceExtractor.extractLargestFaces(mesh, 2);
+        const midPlane = FaceExtractor.extractMidPlane(mesh);
+        setGeometryFace(midPlane.constant);
         if (mesh.userData.selectedForPlane) return;
 
         mesh.userData.selectedForPlane = activePlane;
@@ -127,7 +132,7 @@ function GLBModel({
                     .copy(worldNormal.clone().negate())
                     .multiplyScalar(distance / 2),
             );
-        onSelect?.(activePlane, mesh.name, worldNormal, midPoint);
+        onSelect?.(activePlane, mesh.name, midPlane.normal, midPlane.constant);
     };
 
     return (

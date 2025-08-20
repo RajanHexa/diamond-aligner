@@ -1,4 +1,6 @@
 import gsap from 'gsap';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
+
 import * as THREE from 'three';
 
 export class Utils {
@@ -98,5 +100,37 @@ export class Utils {
         const intersections = raycaster.intersectObject(mesh, true);
         console.log(intersections);
         return intersections.length > 0 ? intersections : null;
+    }
+    static async loadObjModel(url) {
+        const loader = new OBJLoader();
+
+        return new Promise((resolve, reject) => {
+            loader.load(
+                url,
+                (object) => {
+                    if (
+                        object.children.length === 1 &&
+                        object.children[0].isMesh
+                    ) {
+                        resolve(object.children[0]);
+                    } else {
+                        resolve(object); // keep group if multiple meshes
+                    }
+                }, // onLoad
+                undefined, // onProgress (optional)
+                (error) => reject(error), // onError
+            );
+        });
+    }
+    static setCameraNearFarByObject(object) {
+        const box = new THREE.Box3();
+        box.setFromObject(object);
+        const size = box.getSize(new THREE.Vector3());
+        const max = Math.max(size.x, size.y, size.z);
+        if (box.isEmpty()) return null;
+        if (max === Infinity) return null;
+        const near = max / 1000;
+        const far = max * 100;
+        return { far, near };
     }
 }
