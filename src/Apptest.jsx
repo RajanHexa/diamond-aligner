@@ -93,7 +93,7 @@ export default function AppTest() {
 
     const handleFitToView = () => {
         const box = new THREE.Box3();
-        if (fixtureRef.current) box.expandByObject(fixtureRef.current);
+        // if (fixtureRef.current) box.expandByObject(fixtureRef.current);
         if (model1) box.expandByObject(model1);
         if (model2) box.expandByObject(model2);
 
@@ -101,7 +101,7 @@ export default function AppTest() {
         box.getSize(size);
         const center = new THREE.Vector3();
         box.getCenter(center);
-        const distance = Math.max(size.x, size.y, size.z) * 1.5;
+        const distance = Math.max(size.x, size.y, size.z) * 50;
         const from = center.clone().add(new THREE.Vector3(0, distance, 0));
         const to = center;
 
@@ -250,7 +250,7 @@ export default function AppTest() {
                     zoom: 0.1,
                     near: nearFar.near,
                     far: nearFar.far,
-                    position: [0, 0, 0], // start away from origin
+                    position: [0, 5000, 0], // start away from origin
                     left: -window.innerWidth / 2,
                     right: window.innerWidth / 2,
                     top: window.innerHeight / 2,
