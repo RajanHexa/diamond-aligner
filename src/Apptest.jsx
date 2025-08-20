@@ -294,6 +294,25 @@ export default function AppTest() {
                 <Environment preset="city" />
                 {/* <Viewer3D cameraRef={cameraControlsRef} /> */}
                 <CameraControls ref={cameraControlsRef} makeDefault />
+                {/* {geometry1 && (
+                    <mesh geometry={geometry1}>
+                        <meshBasicMaterial attach="material" color="pink" />
+                    </mesh>
+                )} */}
+                {/* {midPlane1 && (
+                    <NormalArrow
+                        normal={midPlane1.normal}
+                        position={midPlane1.centroid}
+                        length={5000}
+                    />
+                )}
+                {midPlane2 && (
+                    <NormalArrow
+                        normal={midPlane2.normal}
+                        position={midPlane2.centroid}
+                        length={5000}
+                    />
+                )} */}
                 <group ref={groupRef}>
                     <group ref={modelGroupRef}>
                         {model1 && <LoadModel mesh={model1} />}
