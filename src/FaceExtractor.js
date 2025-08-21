@@ -118,113 +118,6 @@ export class FaceExtractor {
             .sort((a, b) => b.area - a.area)
             .slice(0, n);
     }
-
-    /**
-     * Export face group as OBJ string
-     * @param {THREE.Mesh} mesh
-     * @param {Array<number>} faceGroup
-     * @returns {string} OBJ formatted string
-     */
-    static exportFaceGroupAsOBJ(mesh, faceGroup) {
-        const geometry = mesh.geometry;
-        const positions = geometry.attributes.position.array;
-        const indices = geometry.index.array;
-
-        let objStr = 'o FaceGroup\n';
-
-        const vertMap = new Map();
-        let vertList = [];
-        let faceList = [];
-
-        let vertCounter = 1;
-
-        for (const f of faceGroup) {
-            const a = indices[f * 3],
-                b = indices[f * 3 + 1],
-                c = indices[f * 3 + 2];
-            const faceVerts = [a, b, c].map((vIdx) => {
-                if (!vertMap.has(vIdx)) {
-                    const vx = positions[vIdx * 3];
-                    const vy = positions[vIdx * 3 + 1];
-                    const vz = positions[vIdx * 3 + 2];
-                    vertList.push(`v ${vx} ${vy} ${vz}`);
-                    vertMap.set(vIdx, vertCounter++);
-                }
-                return vertMap.get(vIdx);
-            });
-            faceList.push(`f ${faceVerts[0]} ${faceVerts[1]} ${faceVerts[2]}`);
-        }
-
-        objStr += vertList.join('\n') + '\n';
-        objStr += faceList.join('\n') + '\n';
-
-        return objStr;
-    }
-    static getBoundaryLoop(mesh, faceGroup) {
-        const geometry = mesh.geometry;
-        const indices = geometry.index.array;
-
-        const edgeCount = new Map();
-
-        function edgeKey(a, b) {
-            return a < b ? `${a}_${b}` : `${b}_${a}`;
-        }
-
-        // Count edges
-        for (const f of faceGroup) {
-            const a = indices[f * 3],
-                b = indices[f * 3 + 1],
-                c = indices[f * 3 + 2];
-
-            const edges = [
-                [a, b],
-                [b, c],
-                [c, a],
-            ];
-
-            for (const [v1, v2] of edges) {
-                const key = edgeKey(v1, v2);
-                if (!edgeCount.has(key)) {
-                    edgeCount.set(key, { count: 1, verts: [v1, v2] });
-                } else {
-                    edgeCount.get(key).count++;
-                }
-            }
-        }
-
-        // Keep only boundary edges (count = 1)
-        const boundaryEdges = [];
-        for (const { count, verts } of edgeCount.values()) {
-            if (count === 1) boundaryEdges.push(verts);
-        }
-
-        if (boundaryEdges.length === 0) return [];
-
-        // Build adjacency map from boundary edges
-        const adjacency = new Map();
-        for (const [v1, v2] of boundaryEdges) {
-            if (!adjacency.has(v1)) adjacency.set(v1, []);
-            if (!adjacency.has(v2)) adjacency.set(v2, []);
-            adjacency.get(v1).push(v2);
-            adjacency.get(v2).push(v1);
-        }
-
-        // Order into loop
-        const loop = [];
-        let start = boundaryEdges[0][0];
-        let current = start;
-        let prev = null;
-
-        do {
-            loop.push(current);
-            const neighbors = adjacency.get(current);
-            const next = neighbors.find((n) => n !== prev);
-            prev = current;
-            current = next;
-        } while (current !== start && current !== undefined);
-
-        return loop;
-    }
     static buildGeometryFromFace(mesh, faceGroup) {
         const geometry = mesh.geometry;
         const posAttr = geometry.attributes.position;
@@ -279,11 +172,6 @@ export class FaceExtractor {
         );
 
         if (!planeA || !planeB) return null;
-
-        // Average normals
-        // const normal = new THREE.Vector3()
-        //     .addVectors(planeA.normal, planeB.normal.negate())
-        //     .normalize();
         const newPoint = planeA.centroid
             .clone()
             .addScaledVector(

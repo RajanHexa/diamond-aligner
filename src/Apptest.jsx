@@ -23,8 +23,6 @@ export default function AppTest() {
     const [points, setPoints] = useState(null);
     const [machineRotaryR, setMachineRotaryR] = useState(null);
     const [machineRotaryW, setMachineRotaryW] = useState(null);
-    // const [geometry1, setGeometry1] = useState(null);
-    // const [geometry2, setGeometry2] = useState(null);
 
     const handleApply = () => {
         if (midPlane1 && midPlane2) {
@@ -289,7 +287,7 @@ export default function AppTest() {
                     zoom: 0.1,
                     near: nearFar.near,
                     far: nearFar.far,
-                    position: [0, 5000, 0], // start away from origin
+                    position: [0, 5000, 0],
                     left: -window.innerWidth / 2,
                     right: window.innerWidth / 2,
                     top: window.innerHeight / 2,
@@ -300,27 +298,7 @@ export default function AppTest() {
                 <directionalLight position={[10, 10, 10]} intensity={0.8} />
                 <directionalLight position={[-10, 10, -10]} intensity={0.6} />
                 <Environment preset="city" />
-                {/* <Viewer3D cameraRef={cameraControlsRef} /> */}
                 <CameraControls ref={cameraControlsRef} makeDefault />
-                {/* {geometry1 && (
-                    <mesh geometry={geometry1}>
-                        <meshBasicMaterial attach="material" color="pink" />
-                    </mesh>
-                )} */}
-                {/* {midPlane1 && (
-                    <NormalArrow
-                        normal={midPlane1.normal}
-                        position={midPlane1.centroid}
-                        length={5000}
-                    />
-                )}
-                {midPlane2 && (
-                    <NormalArrow
-                        normal={midPlane2.normal}
-                        position={midPlane2.centroid}
-                        length={5000}
-                    />
-                )} */}
                 <group ref={groupRef}>
                     <group ref={modelGroupRef}>
                         {model1 && <LoadModel mesh={model1} color={0x00ff00} />}
