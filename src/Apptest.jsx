@@ -2,7 +2,7 @@ import { Canvas } from '@react-three/fiber';
 import { useEffect, useRef, useState } from 'react';
 import LoadModel from './ModelLoader';
 import { Utils } from './Utils';
-import { CameraControls, Environment } from '@react-three/drei';
+import { CameraControls, Environment, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import { FaceExtractor } from './FaceExtractor';
 import { ClipPlane } from './ClipPlane';
@@ -23,6 +23,10 @@ export default function AppTest() {
     const [points, setPoints] = useState(null);
     const [machineRotaryR, setMachineRotaryR] = useState(null);
     const [machineRotaryW, setMachineRotaryW] = useState(null);
+    const [blade1YPoints, setBlade1YPoints] = useState(null);
+    const [blade2YPoints, setBlade2YPoints] = useState(null);
+    const [blade1Far, setBlade1Far] = useState(null);
+    const [blade2Far, setBlade2Far] = useState(null);
 
     const handleApply = () => {
         if (midPlane1 && midPlane2) {
@@ -77,17 +81,43 @@ export default function AppTest() {
         const angleX = Utils.angleToEqualizeZ(points[0], points[1]);
         const deg = THREE.MathUtils.radToDeg(angleX);
         setMachineRotaryR(270 - deg);
-        Utils.animateRotation(modelGroupRef.current, angleX, 'x', () => {
+        Utils.animateRotation(modelGroupRef.current, angleX, 'x').then(() => {
             const updatedPoints = [...points];
             updatedPoints[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
             updatedPoints[1].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
             setPoints(updatedPoints);
-            setTimeout(() => {
-                const angleZ = Utils.angleZToEqualizeX(points[0], points[1]);
-                const deg = THREE.MathUtils.radToDeg(angleZ);
-                setMachineRotaryW(90 - deg);
-                Utils.animateRotation(groupRef.current, angleZ, 'z');
-            }, 1000);
+            const angleZ = Utils.angleZToEqualizeX(points[0], points[1]);
+            const deg = THREE.MathUtils.radToDeg(angleZ);
+            setMachineRotaryW(90 - deg);
+            Utils.animateRotation(groupRef.current, angleZ, 'z').then(() => {
+                const updatedPoints = [...points];
+                updatedPoints[0].applyAxisAngle(
+                    new THREE.Vector3(0, 0, 1),
+                    angleZ,
+                );
+                updatedPoints[1].applyAxisAngle(
+                    new THREE.Vector3(0, 0, 1),
+                    angleZ,
+                );
+                setPoints(updatedPoints);
+                const { highest, lowest } = Utils.getMeshHighestLowest(model1);
+                const { highest: highest2, lowest: lowest2 } =
+                    Utils.getMeshHighestLowest(model2);
+                const line = new THREE.Line3(points[0], points[1]);
+                const blade1FarPoint = Utils.getFarthestPointFromLine(
+                    model1,
+                    line,
+                );
+                console.log(blade1FarPoint.point);
+                const blade2FarPoint = Utils.getFarthestPointFromLine(
+                    model2,
+                    line,
+                );
+                setBlade1Far(blade1FarPoint);
+                setBlade2Far(blade2FarPoint);
+                setBlade1YPoints([highest, lowest]);
+                setBlade2YPoints([highest2, lowest2]);
+            });
         });
     }, [aligned]);
 
@@ -155,12 +185,6 @@ export default function AppTest() {
             if (label === 'Model 1') {
                 mesh.geometry.rotateY(Math.PI);
                 setModel1(mesh);
-                // const faces = FaceExtractor.extractLargestFaces(model, 2);
-                // const geometry = FaceExtractor.buildGeometryFromFace(
-                //     model,
-                //     faces[0].faces,
-                // );
-                // setGeometry1(geometry);
                 const midPlane = FaceExtractor.extractMidPlane(mesh);
                 setMidPlane1(midPlane);
             }
@@ -271,6 +295,58 @@ export default function AppTest() {
                         {/* 👈 gap added here */}
                         <div>Rotation R: {machineRotaryR || '-'}</div>
                         <div>Rotation W: {machineRotaryW || '-'}</div>
+                        {blade1YPoints && (
+                            <>
+                                <div>
+                                    Blade1 Top Most Point:{' '}
+                                    <Vec3Display vec={blade1YPoints[0]} />
+                                </div>
+                                <div>
+                                    Blade1 Bottom Most Point:{' '}
+                                    <Vec3Display vec={blade1YPoints[1]} />
+                                </div>
+                            </>
+                        )}
+                        {blade2YPoints && (
+                            <>
+                                <div>
+                                    Blade2 Top Most Point:{' '}
+                                    <Vec3Display vec={blade2YPoints[0]} />
+                                </div>
+                                <div>
+                                    Blade2 Bottom Most Point:{' '}
+                                    <Vec3Display vec={blade2YPoints[1]} />
+                                </div>
+                            </>
+                        )}
+                        {points && (
+                            <>
+                                <div>
+                                    Intersection Top Point:{' '}
+                                    <Vec3Display vec={points[0]} />
+                                </div>
+                                <div>
+                                    Intersection Bottom Point:{' '}
+                                    <Vec3Display vec={points[1]} />
+                                </div>
+                            </>
+                        )}
+                        {blade1Far && (
+                            <>
+                                <div>
+                                    Blade 1 Farthest Point:{' '}
+                                    <Vec3Display vec={blade1Far.point} />
+                                </div>
+                            </>
+                        )}
+                        {blade2Far && (
+                            <>
+                                <div>
+                                    Blade 2 Farthest Point:{' '}
+                                    <Vec3Display vec={blade2Far.point} />
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -299,11 +375,52 @@ export default function AppTest() {
                 <directionalLight position={[-10, 10, -10]} intensity={0.6} />
                 <Environment preset="city" />
                 <CameraControls ref={cameraControlsRef} makeDefault />
+                {/* <Sphere
+                    position={[
+                        -40186.6160905447, 22408.3814400409, 43362.1746671311,
+                    ]}
+                    args={[100]}>
+                    <meshBasicMaterial color={0xff0000} />
+                </Sphere> */}
+                {blade1YPoints && (
+                    <>
+                        <Sphere position={blade1YPoints[0]} args={[50]}>
+                            <meshBasicMaterial color={0xff0000} />
+                        </Sphere>
+                        <Sphere position={blade1YPoints[1]} args={[50]}>
+                            <meshBasicMaterial color={0xff0000} />
+                        </Sphere>
+                    </>
+                )}
+                {blade2YPoints && (
+                    <>
+                        <Sphere position={blade2YPoints[0]} args={[50]}>
+                            <meshBasicMaterial color={0xffff00} />
+                        </Sphere>
+                        <Sphere position={blade2YPoints[1]} args={[50]}>
+                            <meshBasicMaterial color={0xffff00} />
+                        </Sphere>
+                    </>
+                )}
+                {blade1Far && (
+                    <>
+                        <Sphere position={blade1Far.point} args={[50]}>
+                            <meshBasicMaterial color={0x00ffee} />
+                        </Sphere>
+                    </>
+                )}
+                {blade2Far && (
+                    <>
+                        <Sphere position={blade2Far.point} args={[50]}>
+                            <meshBasicMaterial color={0x00ffee} />
+                        </Sphere>
+                    </>
+                )}
                 <group ref={groupRef}>
                     <group ref={modelGroupRef}>
                         {model1 && <LoadModel mesh={model1} color={0x00ff00} />}
                         {model2 && <LoadModel mesh={model2} color={0x000ff0} />}
-                        <group ref={fixtureRef}>
+                        <group>
                             <mesh position={[-6000, 0, 0]}>
                                 <boxGeometry
                                     attach="geometry"
@@ -335,3 +452,14 @@ export default function AppTest() {
         </div>
     );
 }
+
+const Vec3Display = ({ vec }) => {
+    if (!vec) return '-';
+    return (
+        <>
+            (<span style={{ color: 'red' }}>{vec.x.toFixed(2)}</span>,{' '}
+            <span style={{ color: 'green' }}>{vec.y.toFixed(2)}</span>,{' '}
+            <span style={{ color: 'blue' }}>{vec.z.toFixed(2)}</span>)
+        </>
+    );
+};

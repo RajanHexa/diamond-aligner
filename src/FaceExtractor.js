@@ -157,12 +157,21 @@ export class FaceExtractor {
         return geom;
     }
 
+    /**
+     * Computes the midplane from the two largest faces
+     * @param {THREE.Mesh} mesh
+     * @returns {Object} { normal: THREE.Vector3, centroid: THREE.Vector3 } or null
+     */
     static extractMidPlane(mesh) {
         const faces = this.extractLargestFaces(mesh, 2);
         if (faces.length < 2) return null;
 
+        // Compute the two planes from the two largest faces
         const planeA = this.computePlaneFromFace(mesh, faces[0].faces);
         const planeB = this.computePlaneFromFace(mesh, faces[1].faces);
+        if (!planeA || !planeB) return null;
+
+        // Compute the midplane between the two planes
         const planeInstanceA = new THREE.Plane().setFromNormalAndCoplanarPoint(
             planeA.normal,
             planeA.centroid,
@@ -170,8 +179,6 @@ export class FaceExtractor {
         const distance = planeInstanceA.distanceToPoint(
             planeB.centroid.clone(),
         );
-
-        if (!planeA || !planeB) return null;
         const newPoint = planeA.centroid
             .clone()
             .addScaledVector(

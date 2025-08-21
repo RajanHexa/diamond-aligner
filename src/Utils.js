@@ -29,7 +29,7 @@ export class Utils {
 
         return Math.atan2(dy, dx); // radians
     }
-    static animateRotation(object, angle, axis, callback = null) {
+    static animateRotation(object, angle, axis) {
         const obj = {};
         if (axis === 'x') {
             obj.x = angle;
@@ -38,13 +38,15 @@ export class Utils {
         } else if (axis === 'z') {
             obj.z = angle;
         }
-        gsap.to(object.rotation, {
-            ...obj,
-            duration: 1,
-            ease: 'power2.inOut',
+
+        return new Promise((resolve) => {
+            gsap.to(object.rotation, {
+                ...obj,
+                duration: 1,
+                ease: 'power2.inOut',
+                onComplete: resolve, // resolve promise when done
+            });
         });
-        if (!callback) return;
-        callback();
     }
     static angleToEqualizeZ(p1, p2) {
         // p1 and p2 are THREE.Vector3
@@ -132,5 +134,72 @@ export class Utils {
         const near = max / 1000;
         const far = max * 100;
         return { far, near };
+    }
+    static getMeshHighestLowest(mesh) {
+        mesh.updateWorldMatrix(true, false);
+
+        // clone geometry and apply world transform
+        const geometry = mesh.geometry.clone();
+        geometry.applyMatrix4(mesh.matrixWorld);
+
+        // Ensure geometry is non-indexed for easy access
+        const geo = geometry.index ? geometry.toNonIndexed() : geometry;
+
+        const posAttr = geo.attributes.position;
+        const highest = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
+        const lowest = new THREE.Vector3(Infinity, Infinity, Infinity);
+
+        const v = new THREE.Vector3();
+
+        for (let i = 0; i < posAttr.count; i++) {
+            v.fromBufferAttribute(posAttr, i);
+
+            if (v.y > highest.y) {
+                highest.copy(v);
+            }
+            if (v.y < lowest.y) {
+                lowest.copy(v);
+            }
+        }
+
+        return { highest, lowest };
+    }
+    /**
+     * Finds the farthest vertex of a mesh from a given line
+     * @param {THREE.Mesh} mesh - The mesh
+     * @param {THREE.Line3} line - The line (start + end)
+     * @returns {{point: THREE.Vector3, distance: number}}
+     */
+    static getFarthestPointFromLine(mesh, line) {
+        mesh.updateWorldMatrix(true, false);
+
+        // clone geometry and apply world transform
+        const geometry = mesh.geometry.clone();
+        geometry.applyMatrix4(mesh.matrixWorld);
+
+        const posAttr = geometry.attributes.position;
+
+        let farthestPoint = new THREE.Vector3();
+        let maxDist = -Infinity;
+
+        const v = new THREE.Vector3();
+        const closest = new THREE.Vector3();
+
+        for (let i = 0; i < posAttr.count; i++) {
+            v.fromBufferAttribute(posAttr, i);
+
+            // Get closest point on line to this vertex
+            line.closestPointToPoint(v, false, closest);
+
+            // Distance between vertex and line
+            const dist = v.distanceTo(closest);
+
+            if (dist > maxDist) {
+                maxDist = dist;
+                farthestPoint.copy(v);
+            }
+        }
+
+        return { point: farthestPoint, distance: maxDist };
     }
 }
