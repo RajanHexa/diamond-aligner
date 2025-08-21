@@ -91,4 +91,62 @@ export class ClipPlane {
         }
         return intersections;
     }
+    static stitchSegments(segments, tolerance = 1e-6) {
+        const stitched = [];
+        const used = new Array(segments.length).fill(false);
+
+        // Helper: check if two points are the same (within tolerance)
+        function samePoint(a, b) {
+            return a.distanceTo(b) < tolerance;
+        }
+
+        // Start from first unused segment
+        for (let i = 0; i < segments.length; i++) {
+            if (used[i]) continue;
+
+            let polyline = [segments[i].start.clone(), segments[i].end.clone()];
+            used[i] = true;
+
+            let extended = true;
+            while (extended) {
+                extended = false;
+                for (let j = 0; j < segments.length; j++) {
+                    if (used[j]) continue;
+
+                    // Try to connect at the end
+                    if (
+                        samePoint(
+                            polyline[polyline.length - 1],
+                            segments[j].start,
+                        )
+                    ) {
+                        polyline.push(segments[j].end.clone());
+                        used[j] = true;
+                        extended = true;
+                    } else if (
+                        samePoint(
+                            polyline[polyline.length - 1],
+                            segments[j].end,
+                        )
+                    ) {
+                        polyline.push(segments[j].start.clone());
+                        used[j] = true;
+                        extended = true;
+                    }
+                    // Try to connect at the start
+                    else if (samePoint(polyline[0], segments[j].end)) {
+                        polyline.unshift(segments[j].start.clone());
+                        used[j] = true;
+                        extended = true;
+                    } else if (samePoint(polyline[0], segments[j].start)) {
+                        polyline.unshift(segments[j].end.clone());
+                        used[j] = true;
+                        extended = true;
+                    }
+                }
+            }
+            stitched.push(polyline);
+        }
+        return stitched;
+    }
 }

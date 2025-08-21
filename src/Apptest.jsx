@@ -150,29 +150,29 @@ export default function AppTest() {
         if (file) {
             const blob = new Blob([file], { type: file.type });
             const url = URL.createObjectURL(blob);
-            const model = await Utils.loadObjModel(url);
+            const mesh = await Utils.loadObjModel(url);
 
             if (label === 'Model 1') {
-                model.geometry.rotateY(Math.PI);
-                setModel1(model);
+                mesh.geometry.rotateY(Math.PI);
+                setModel1(mesh);
                 // const faces = FaceExtractor.extractLargestFaces(model, 2);
                 // const geometry = FaceExtractor.buildGeometryFromFace(
                 //     model,
                 //     faces[0].faces,
                 // );
                 // setGeometry1(geometry);
-                const midPlane = FaceExtractor.extractMidPlane(model);
+                const midPlane = FaceExtractor.extractMidPlane(mesh);
                 setMidPlane1(midPlane);
             }
 
             if (label === 'Model 2') {
-                model.geometry.rotateY(Math.PI);
-                setModel2(model);
-                const midPlane = FaceExtractor.extractMidPlane(model);
+                mesh.geometry.rotateY(Math.PI);
+                setModel2(mesh);
+                const midPlane = FaceExtractor.extractMidPlane(mesh);
                 setMidPlane2(midPlane);
             }
 
-            const { far, near } = Utils.setCameraNearFarByObject(model);
+            const { far, near } = Utils.setCameraNearFarByObject(mesh);
             if (far && near) setNearFar({ far, near });
         }
     };
