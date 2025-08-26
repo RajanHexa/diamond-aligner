@@ -459,7 +459,7 @@ const Vec3Display = ({ vec }) => {
         <>
             (<span style={{ color: 'red' }}>{vec.x.toFixed(2)}</span>,{' '}
             <span style={{ color: 'green' }}>{vec.y.toFixed(2)}</span>,{' '}
-            <span style={{ color: 'blue' }}>{vec.z.toFixed(2)}</span>)
+            <span style={{ color: 'yellow' }}>{vec.z.toFixed(2)}</span>)
         </>
     );
 };
