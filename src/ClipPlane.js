@@ -67,7 +67,7 @@ export class ClipPlane {
         const stichedContour = ClipPlane.stitchSegments(contourSegments);
         return stichedContour[0];
     }
-    static getContourPlaneIntersection(contourPoints, secondPlane) {
+    static getContourPlaneIntersection(contourPoints, secondPlane, plane) {
         const intersections = [];
         const line = new THREE.Line3();
         const tempPoint = new THREE.Vector3();
@@ -89,7 +89,65 @@ export class ClipPlane {
                 }
             }
         }
-        return intersections;
+        const projectedPoint1 = new THREE.Vector3();
+        const projectedPoint2 = new THREE.Vector3();
+        const segments = ClipPlane.filterSegmentsByDirection(
+            contourPoints,
+            intersections,
+        );
+        if (!segments) {
+            plane.projectPoint(intersections[0], projectedPoint1);
+            plane.projectPoint(intersections[1], projectedPoint2);
+            return [projectedPoint1, projectedPoint2];
+        }
+        return segments;
+    }
+    static filterSegmentsByDirection(
+        contourPoints,
+        intersections,
+        tolerance = 0.9,
+    ) {
+        if (intersections.length !== 2) return [];
+
+        const [p1, p2] = intersections;
+        const mainDir = new THREE.Vector3().subVectors(p2, p1).normalize();
+
+        const segments = [];
+        let currentSeg = [];
+
+        // Step 1: find all contiguous direction-aligned segments
+        for (let i = 0; i < contourPoints.length - 1; i++) {
+            const a = contourPoints[i];
+            const b = contourPoints[i + 1];
+
+            const dir = new THREE.Vector3().subVectors(b, a).normalize();
+            const dot = dir.dot(mainDir);
+
+            if (Math.abs(dot) >= tolerance) {
+                // keep segment chain
+                if (currentSeg.length === 0) currentSeg.push(a.clone());
+                currentSeg.push(b.clone());
+            } else {
+                // direction broken → push current seg
+                if (currentSeg.length > 1) {
+                    segments.push(currentSeg);
+                }
+                currentSeg = [];
+            }
+        }
+        if (currentSeg.length > 1) {
+            segments.push(currentSeg);
+        }
+        const segWithIntersections = segments.filter((seg) => {
+            const hasP1 = seg.some((pt) => pt.distanceTo(p1) < 1);
+            const hasP2 = seg.some((pt) => pt.distanceTo(p2) < 1);
+            return hasP1 || hasP2;
+        });
+        if (!segWithIntersections.length) return;
+        return [
+            segWithIntersections[0][0],
+            segWithIntersections[0][segWithIntersections[0].length - 1],
+        ];
     }
     static stitchSegments(segments, tolerance = 1e-6) {
         const stitched = [];

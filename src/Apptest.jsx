@@ -6,8 +6,11 @@ import { CameraControls, Environment, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import { FaceExtractor } from './FaceExtractor';
 import { ClipPlane } from './ClipPlane';
+import { DataProcesser } from './DataProcessor';
 
 export default function AppTest() {
+    // ✅ Fix here
+    window.processData = DataProcesser.processOBJ;
     const cameraControlsRef = useRef();
     const inputRef1 = useRef();
     const inputRef2 = useRef();
@@ -27,6 +30,10 @@ export default function AppTest() {
     const [blade2YPoints, setBlade2YPoints] = useState(null);
     const [blade1Far, setBlade1Far] = useState(null);
     const [blade2Far, setBlade2Far] = useState(null);
+    const [bladeIntersection1, setBladeIntersection1] = useState(null);
+    const [bladeIntersection2, setBladeIntersection2] = useState(null);
+    const [bladeContour, setBladeContour] = useState(null);
+    const [contour1, setContour1] = useState(null);
 
     const handleApply = () => {
         if (midPlane1 && midPlane2) {
@@ -47,6 +54,7 @@ export default function AppTest() {
             const point = ClipPlane.getContourPlaneIntersection(
                 planeShape,
                 planeInstance2,
+                planeInstance1,
             );
             if (point.length == 0) {
                 const planeInstance1 = new THREE.Plane();
@@ -66,6 +74,7 @@ export default function AppTest() {
                 const point = ClipPlane.getContourPlaneIntersection(
                     planeShape,
                     planeInstance1,
+                    planeInstance2,
                 );
                 setAligned(true);
                 setPoints(point);
@@ -73,6 +82,7 @@ export default function AppTest() {
                 setAligned(true);
                 setPoints(point);
             }
+            setBladeIntersection2(point);
         }
     };
 
@@ -80,7 +90,7 @@ export default function AppTest() {
         if (!points || !aligned) return;
         const angleX = Utils.angleToEqualizeZ(points[0], points[1]);
         const deg = THREE.MathUtils.radToDeg(angleX);
-        setMachineRotaryR(270 - deg);
+        setMachineRotaryR(deg);
         Utils.animateRotation(modelGroupRef.current, angleX, 'x').then(() => {
             const updatedPoints = [...points];
             updatedPoints[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
@@ -88,7 +98,7 @@ export default function AppTest() {
             setPoints(updatedPoints);
             const angleZ = Utils.angleZToEqualizeX(points[0], points[1]);
             const deg = THREE.MathUtils.radToDeg(angleZ);
-            setMachineRotaryW(90 - deg);
+            setMachineRotaryW(deg);
             Utils.animateRotation(groupRef.current, angleZ, 'z').then(() => {
                 const updatedPoints = [...points];
                 updatedPoints[0].applyAxisAngle(
@@ -107,11 +117,12 @@ export default function AppTest() {
                 const blade1FarPoint = Utils.getFarthestPointFromLine(
                     model1,
                     line,
+                    points[0],
                 );
-                console.log(blade1FarPoint.point);
                 const blade2FarPoint = Utils.getFarthestPointFromLine(
                     model2,
                     line,
+                    points[0],
                 );
                 setBlade1Far(blade1FarPoint);
                 setBlade2Far(blade2FarPoint);
@@ -256,104 +267,184 @@ export default function AppTest() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     padding: '0 20px',
+                    fontFamily: 'Arial, sans-serif',
                 }}>
-                {/* Left side buttons */}
+                {/* Left side panel */}
                 <div>
-                    <button onClick={handleApply} style={{ marginLeft: 10 }}>
-                        Apply
-                    </button>
+                    <div style={{ marginBottom: '10px' }}>
+                        <button
+                            onClick={handleApply}
+                            style={{
+                                marginRight: 10,
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                background: '#4cafef',
+                                color: 'white',
+                            }}>
+                            Apply
+                        </button>
 
-                    {/* Load Model 1 */}
-                    <button
-                        style={{ marginLeft: 10 }}
-                        onClick={() => inputRef1.current.click()}>
-                        Load Model 1
-                    </button>
-                    <input
-                        ref={inputRef1}
-                        type="file"
-                        accept=".obj"
-                        style={{ display: 'none' }}
-                        onChange={(e) => handleFileLoad(e, 'Model 1')}
-                    />
+                        <button
+                            style={{
+                                marginRight: 10,
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                background: '#3b82f6',
+                                color: 'white',
+                            }}
+                            onClick={() => inputRef1.current.click()}>
+                            Load Model 1
+                        </button>
+                        <input
+                            ref={inputRef1}
+                            type="file"
+                            accept=".obj"
+                            style={{ display: 'none' }}
+                            onChange={(e) => handleFileLoad(e, 'Model 1')}
+                        />
 
-                    {/* Load Model 2 */}
-                    <button
-                        style={{ marginLeft: 10 }}
-                        onClick={() => inputRef2.current.click()}>
-                        Load Model 2
-                    </button>
-                    <input
-                        ref={inputRef2}
-                        type="file"
-                        accept=".obj"
-                        style={{ display: 'none' }}
-                        onChange={(e) => handleFileLoad(e, 'Model 2')}
-                    />
-                    <div style={{ marginTop: '10px', marginLeft: '10px' }}>
-                        {' '}
-                        {/* 👈 gap added here */}
-                        <div>Rotation R: {machineRotaryR || '-'}</div>
-                        <div>Rotation W: {machineRotaryW || '-'}</div>
+                        <button
+                            style={{
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                background: '#3b82f6',
+                                color: 'white',
+                            }}
+                            onClick={() => inputRef2.current.click()}>
+                            Load Model 2
+                        </button>
+                        <input
+                            ref={inputRef2}
+                            type="file"
+                            accept=".obj"
+                            style={{ display: 'none' }}
+                            onChange={(e) => handleFileLoad(e, 'Model 2')}
+                        />
+                    </div>
+
+                    {/* Data panel */}
+                    <div
+                        style={{
+                            marginTop: '10px',
+                            marginLeft: '10px',
+                            padding: '12px',
+                            borderRadius: '10px',
+                            background: 'rgba(0,0,0,0.6)',
+                            lineHeight: '1.6',
+                        }}>
+                        <div>
+                            <strong>Rotation R:</strong> {machineRotaryR || '-'}
+                        </div>
+                        <div>
+                            <strong>Rotation W:</strong> {machineRotaryW || '-'}
+                        </div>
+
                         {blade1YPoints && (
                             <>
                                 <div>
-                                    Blade1 Top Most Point:{' '}
+                                    <strong>Blade 1 Top Most Point:</strong>{' '}
                                     <Vec3Display vec={blade1YPoints[0]} />
                                 </div>
                                 <div>
-                                    Blade1 Bottom Most Point:{' '}
+                                    <strong>Blade 1 Bottom Most Point:</strong>{' '}
                                     <Vec3Display vec={blade1YPoints[1]} />
                                 </div>
                             </>
                         )}
+
                         {blade2YPoints && (
                             <>
                                 <div>
-                                    Blade2 Top Most Point:{' '}
+                                    <strong>Blade 2 Top Most Point:</strong>{' '}
                                     <Vec3Display vec={blade2YPoints[0]} />
                                 </div>
                                 <div>
-                                    Blade2 Bottom Most Point:{' '}
+                                    <strong>Blade 2 Bottom Most Point:</strong>{' '}
                                     <Vec3Display vec={blade2YPoints[1]} />
                                 </div>
                             </>
                         )}
+
                         {points && (
                             <>
                                 <div>
-                                    Intersection Top Point:{' '}
+                                    <strong>Intersection Top Point:</strong>{' '}
                                     <Vec3Display vec={points[0]} />
                                 </div>
                                 <div>
-                                    Intersection Bottom Point:{' '}
+                                    <strong>Intersection Bottom Point:</strong>{' '}
                                     <Vec3Display vec={points[1]} />
                                 </div>
                             </>
                         )}
+
                         {blade1Far && (
-                            <>
-                                <div>
-                                    Blade 1 Farthest Point:{' '}
-                                    <Vec3Display vec={blade1Far.point} />
-                                </div>
-                            </>
+                            <div style={{ marginTop: '8px' }}>
+                                <strong>Blade 1 Farthest Distance:</strong>{' '}
+                                <span
+                                    style={{
+                                        color: '#f87171',
+                                        fontWeight: 'bold',
+                                    }}>
+                                    {blade1Far.distance.toFixed(2)}
+                                </span>
+                                <br />
+                                <strong>Blade 1 Farthest Point:</strong>{' '}
+                                <Vec3Display vec={blade1Far.point} />
+                            </div>
                         )}
+
                         {blade2Far && (
-                            <>
-                                <div>
-                                    Blade 2 Farthest Point:{' '}
-                                    <Vec3Display vec={blade2Far.point} />
-                                </div>
-                            </>
+                            <div style={{ marginTop: '8px' }}>
+                                <strong>Blade 2 Farthest Distance:</strong>{' '}
+                                <span
+                                    style={{
+                                        color: '#f87171',
+                                        fontWeight: 'bold',
+                                    }}>
+                                    {blade2Far.distance.toFixed(2)}
+                                </span>
+                                <br />
+                                <strong>Blade 2 Farthest Point:</strong>{' '}
+                                <Vec3Display vec={blade2Far.point} />
+                            </div>
                         )}
                     </div>
                 </div>
 
-                {/* Right side button */}
+                {/* Right side buttons */}
                 <div>
-                    <button onClick={handleFitToView}>Top View</button>
-                    <button onClick={handleFrontView}>Front View</button>
+                    <button
+                        onClick={handleFitToView}
+                        style={{
+                            marginRight: 10,
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            background: '#10b981',
+                            color: 'white',
+                        }}>
+                        Top View
+                    </button>
+                    <button
+                        onClick={handleFrontView}
+                        style={{
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            background: '#10b981',
+                            color: 'white',
+                        }}>
+                        Front View
+                    </button>
                 </div>
             </div>
 

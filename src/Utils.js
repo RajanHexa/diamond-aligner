@@ -100,7 +100,6 @@ export class Utils {
         raycaster.ray.origin.copy(linePoint);
         raycaster.ray.direction.copy(lineDir).normalize();
         const intersections = raycaster.intersectObject(mesh, true);
-        console.log(intersections);
         return intersections.length > 0 ? intersections : null;
     }
     static async loadObjModel(url) {
@@ -170,7 +169,7 @@ export class Utils {
      * @param {THREE.Line3} line - The line (start + end)
      * @returns {{point: THREE.Vector3, distance: number}}
      */
-    static getFarthestPointFromLine(mesh, line) {
+    static getFarthestPointFromLine(mesh, line, planePoint) {
         mesh.updateWorldMatrix(true, false);
 
         // clone geometry and apply world transform
@@ -199,7 +198,32 @@ export class Utils {
                 farthestPoint.copy(v);
             }
         }
+        const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
+            new THREE.Vector3(0, 1, 0),
+            planePoint,
+        );
+        const projectedFarthestPoint = new THREE.Vector3();
+        plane.projectPoint(farthestPoint, projectedFarthestPoint);
+        const distance = farthestPoint.distanceTo(projectedFarthestPoint);
+        return { point: projectedFarthestPoint, distance: distance };
+    }
+    static exportPointsToOBJ(points) {
+        let objData = '';
 
-        return { point: farthestPoint, distance: maxDist };
+        // Each point becomes a vertex line in OBJ
+        for (let i = 0; i < points.length; i++) {
+            const p = points[i];
+            objData += `v ${p.x} ${p.y} ${p.z}\n`;
+        }
+
+        return objData;
+    }
+    static downloadOBJ(points, filename = 'points.obj') {
+        const objText = Utils.exportPointsToOBJ(points);
+        const blob = new Blob([objText], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
     }
 }
