@@ -160,8 +160,13 @@ export class Utils {
                 lowest.copy(v);
             }
         }
+        const matrixInvert = mesh.matrixWorld.clone().invert();
+        const localHighest = new THREE.Vector3().copy(highest);
+        localHighest.applyMatrix4(matrixInvert);
+        const localLowest = new THREE.Vector3().copy(lowest);
+        localLowest.applyMatrix4(matrixInvert);
 
-        return { highest, lowest };
+        return { highest, lowest, localHighest, localLowest };
     }
     /**
      * Finds the farthest vertex of a mesh from a given line
@@ -205,7 +210,16 @@ export class Utils {
         const projectedFarthestPoint = new THREE.Vector3();
         plane.projectPoint(farthestPoint, projectedFarthestPoint);
         const distance = farthestPoint.distanceTo(projectedFarthestPoint);
-        return { point: projectedFarthestPoint, distance: distance };
+        const invertMatrix = mesh.matrixWorld.clone().invert();
+        const localProjectedFarthestPoint = new THREE.Vector3().copy(
+            projectedFarthestPoint,
+        );
+        localProjectedFarthestPoint.applyMatrix4(invertMatrix);
+        return {
+            point: projectedFarthestPoint,
+            distance: distance,
+            localPoint: localProjectedFarthestPoint,
+        };
     }
     static exportPointsToOBJ(points) {
         let objData = '';

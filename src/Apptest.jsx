@@ -28,6 +28,9 @@ export default function AppTest() {
     const [machineRotaryW, setMachineRotaryW] = useState(null);
     const [blade1YPoints, setBlade1YPoints] = useState(null);
     const [blade2YPoints, setBlade2YPoints] = useState(null);
+    const [blade1LocalYPoints, setBlade1LocalYPoints] = useState(null);
+    const [blade2LocalYPoints, setBlade2LocalYPoints] = useState(null);
+    const [pointsLocal, setPointsLocal] = useState(null);
     const [blade1Far, setBlade1Far] = useState(null);
     const [blade2Far, setBlade2Far] = useState(null);
     const [blade1Angle, setBlade1Angle] = useState(null);
@@ -84,6 +87,8 @@ export default function AppTest() {
                 setAligned(true);
                 setPoints(point);
             }
+            const copy = point.map((v) => v.clone());
+            setPointsLocal(copy);
             setBladeIntersection2(point);
         }
     };
@@ -112,9 +117,14 @@ export default function AppTest() {
                     angleZ,
                 );
                 setPoints(updatedPoints);
-                const { highest, lowest } = Utils.getMeshHighestLowest(model1);
-                const { highest: highest2, lowest: lowest2 } =
-                    Utils.getMeshHighestLowest(model2);
+                const { highest, lowest, localHighest, localLowest } =
+                    Utils.getMeshHighestLowest(model1);
+                const {
+                    highest: highest2,
+                    lowest: lowest2,
+                    localHighest: localHighest2,
+                    localLowest: localLowest2,
+                } = Utils.getMeshHighestLowest(model2);
                 const line = new THREE.Line3(points[0], points[1]);
                 const blade1FarPoint = Utils.getFarthestPointFromLine(
                     model1,
@@ -130,6 +140,8 @@ export default function AppTest() {
                 setBlade2Far(blade2FarPoint);
                 setBlade1YPoints([highest, lowest]);
                 setBlade2YPoints([highest2, lowest2]);
+                setBlade1LocalYPoints([localHighest, localLowest]);
+                setBlade2LocalYPoints([localHighest2, localLowest2]);
                 const blade1Angle = Utils.computeBladeAngle(
                     points,
                     blade1FarPoint.point,
@@ -339,112 +351,253 @@ export default function AppTest() {
                             onChange={(e) => handleFileLoad(e, 'Model 2')}
                         />
                     </div>
-
-                    {/* Data panel */}
-                    <div
-                        style={{
-                            marginTop: '10px',
-                            marginLeft: '10px',
-                            padding: '12px',
-                            borderRadius: '10px',
-                            background: 'rgba(0,0,0,0.6)',
-                            lineHeight: '1.6',
-                        }}>
-                        <div>
-                            <strong>Rotation R:</strong> {machineRotaryR || '-'}
-                        </div>
-                        <div>
-                            <strong>Rotation W:</strong> {machineRotaryW || '-'}
-                        </div>
-
-                        {blade1YPoints && (
-                            <>
-                                <div>
-                                    <strong>Blade 1 Top Most Point:</strong>{' '}
-                                    <Vec3Display vec={blade1YPoints[0]} />
-                                </div>
-                                <div>
-                                    <strong>Blade 1 Bottom Most Point:</strong>{' '}
-                                    <Vec3Display vec={blade1YPoints[1]} />
-                                </div>
-                            </>
-                        )}
-
-                        {blade2YPoints && (
-                            <>
-                                <div>
-                                    <strong>Blade 2 Top Most Point:</strong>{' '}
-                                    <Vec3Display vec={blade2YPoints[0]} />
-                                </div>
-                                <div>
-                                    <strong>Blade 2 Bottom Most Point:</strong>{' '}
-                                    <Vec3Display vec={blade2YPoints[1]} />
-                                </div>
-                            </>
-                        )}
-
-                        {points && (
-                            <>
-                                <div>
-                                    <strong>Intersection Top Point:</strong>{' '}
-                                    <Vec3Display vec={points[0]} />
-                                </div>
-                                <div>
-                                    <strong>Intersection Bottom Point:</strong>{' '}
-                                    <Vec3Display vec={points[1]} />
-                                </div>
-                            </>
-                        )}
-
-                        {blade1Far && (
-                            <div style={{ marginTop: '8px' }}>
-                                <strong>Blade 1 Farthest Distance:</strong>{' '}
-                                <span
-                                    style={{
-                                        color: '#f87171',
-                                        fontWeight: 'bold',
-                                    }}>
-                                    {blade1Far.distance.toFixed(2)}
-                                </span>
-                                <br />
-                                <strong>Blade 1 Farthest Point:</strong>{' '}
-                                <Vec3Display vec={blade1Far.point} />
-                                <br />
-                                <strong>Blade 1 Angle:</strong>{' '}
-                                <span
-                                    style={{
-                                        color: '#f87171',
-                                        fontWeight: 'bold',
-                                    }}>
-                                    {blade1Angle.toFixed(2)}
-                                </span>
+                    <div style={{ marginBottom: '10px', display: 'flex' }}>
+                        {/* Data panel */}
+                        <div
+                            style={{
+                                marginTop: '10px',
+                                marginLeft: '10px',
+                                padding: '12px',
+                                borderRadius: '10px',
+                                background: 'rgba(0,0,0,0.6)',
+                                lineHeight: '1.6',
+                            }}>
+                            <div>Without Rotation</div>
+                            <div>
+                                <strong>Rotation R:</strong>{' '}
+                                {machineRotaryR || '-'}
                             </div>
-                        )}
-
-                        {blade2Far && (
-                            <div style={{ marginTop: '8px' }}>
-                                <strong>Blade 2 Farthest Distance:</strong>{' '}
-                                <span
-                                    style={{
-                                        color: '#f87171',
-                                        fontWeight: 'bold',
-                                    }}>
-                                    {blade2Far.distance.toFixed(2)}
-                                </span>
-                                <br />
-                                <strong>Blade 2 Farthest Point:</strong>{' '}
-                                <Vec3Display vec={blade2Far.point} />
-                                <br />
-                                <strong>Blade 2 Angle:</strong>{' '}
-                                <span
-                                    style={{
-                                        color: '#f87171',
-                                        fontWeight: 'bold',
-                                    }}>
-                                    {blade2Angle.toFixed(2)}
-                                </span>
+                            <div>
+                                <strong>Rotation W:</strong>{' '}
+                                {machineRotaryW || '-'}
                             </div>
-                        )}
+
+                            {blade1YPoints && (
+                                <>
+                                    <div>
+                                        <strong>Blade 1 Top Most Point:</strong>{' '}
+                                        <Vec3Display vec={blade1YPoints[0]} />
+                                    </div>
+                                    <div>
+                                        <strong>
+                                            Blade 1 Bottom Most Point:
+                                        </strong>{' '}
+                                        <Vec3Display vec={blade1YPoints[1]} />
+                                    </div>
+                                </>
+                            )}
+
+                            {blade2YPoints && (
+                                <>
+                                    <div>
+                                        <strong>Blade 2 Top Most Point:</strong>{' '}
+                                        <Vec3Display vec={blade2YPoints[0]} />
+                                    </div>
+                                    <div>
+                                        <strong>
+                                            Blade 2 Bottom Most Point:
+                                        </strong>{' '}
+                                        <Vec3Display vec={blade2YPoints[1]} />
+                                    </div>
+                                </>
+                            )}
+
+                            {points && (
+                                <>
+                                    <div>
+                                        <strong>Intersection Top Point:</strong>{' '}
+                                        <Vec3Display vec={points[0]} />
+                                    </div>
+                                    <div>
+                                        <strong>
+                                            Intersection Bottom Point:
+                                        </strong>{' '}
+                                        <Vec3Display vec={points[1]} />
+                                    </div>
+                                </>
+                            )}
+
+                            {blade1Far && (
+                                <div style={{ marginTop: '8px' }}>
+                                    <strong>Blade 1 Farthest Distance:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {blade1Far.distance.toFixed(2)}
+                                    </span>
+                                    <br />
+                                    <strong>
+                                        Blade 1 Farthest Point:
+                                    </strong>{' '}
+                                    <Vec3Display vec={blade1Far.point} />
+                                    <br />
+                                    <strong>Blade 1 Angle:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {blade1Angle.toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+
+                            {blade2Far && (
+                                <div style={{ marginTop: '8px' }}>
+                                    <strong>Blade 2 Farthest Distance:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {blade2Far.distance.toFixed(2)}
+                                    </span>
+                                    <br />
+                                    <strong>
+                                        Blade 2 Farthest Point:
+                                    </strong>{' '}
+                                    <Vec3Display vec={blade2Far.point} />
+                                    <br />
+                                    <strong>Blade 2 Angle:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {blade2Angle.toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                        {/* Data panel */}
+                        <div
+                            style={{
+                                marginTop: '10px',
+                                marginLeft: '10px',
+                                padding: '12px',
+                                borderRadius: '10px',
+                                background: 'rgba(0,0,0,0.6)',
+                                lineHeight: '1.6',
+                            }}>
+                            <div>Without Rotation</div>
+                            <div>
+                                <strong>Rotation R:</strong>{' '}
+                                {machineRotaryR || '-'}
+                            </div>
+                            <div>
+                                <strong>Rotation W:</strong>{' '}
+                                {machineRotaryW || '-'}
+                            </div>
+
+                            {blade1LocalYPoints && (
+                                <>
+                                    <div>
+                                        <strong>Blade 1 Top Most Point:</strong>{' '}
+                                        <Vec3Display
+                                            vec={blade1LocalYPoints[0]}
+                                        />
+                                    </div>
+                                    <div>
+                                        <strong>
+                                            Blade 1 Bottom Most Point:
+                                        </strong>{' '}
+                                        <Vec3Display
+                                            vec={blade1LocalYPoints[1]}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {blade2LocalYPoints && (
+                                <>
+                                    <div>
+                                        <strong>Blade 2 Top Most Point:</strong>{' '}
+                                        <Vec3Display
+                                            vec={blade2LocalYPoints[0]}
+                                        />
+                                    </div>
+                                    <div>
+                                        <strong>
+                                            Blade 2 Bottom Most Point:
+                                        </strong>{' '}
+                                        <Vec3Display
+                                            vec={blade2LocalYPoints[1]}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {pointsLocal && (
+                                <>
+                                    <div>
+                                        <strong>Intersection Top Point:</strong>{' '}
+                                        <Vec3Display vec={pointsLocal[0]} />
+                                    </div>
+                                    <div>
+                                        <strong>
+                                            Intersection Bottom Point:
+                                        </strong>{' '}
+                                        <Vec3Display vec={pointsLocal[1]} />
+                                    </div>
+                                </>
+                            )}
+
+                            {blade1Far && (
+                                <div style={{ marginTop: '8px' }}>
+                                    <strong>Blade 1 Farthest Distance:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {blade1Far.distance.toFixed(2)}
+                                    </span>
+                                    <br />
+                                    <strong>
+                                        Blade 1 Farthest Point:
+                                    </strong>{' '}
+                                    <Vec3Display vec={blade1Far.localPoint} />
+                                    <br />
+                                    <strong>Blade 1 Angle:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {blade1Angle.toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+
+                            {blade2Far && (
+                                <div style={{ marginTop: '8px' }}>
+                                    <strong>Blade 2 Farthest Distance:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {blade2Far.distance.toFixed(2)}
+                                    </span>
+                                    <br />
+                                    <strong>
+                                        Blade 2 Farthest Point:
+                                    </strong>{' '}
+                                    <Vec3Display vec={blade1Far.localPoint} />
+                                    <br />
+                                    <strong>Blade 2 Angle:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {blade2Angle.toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
