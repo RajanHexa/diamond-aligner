@@ -30,6 +30,8 @@ export default function AppTest() {
     const [blade2YPoints, setBlade2YPoints] = useState(null);
     const [blade1Far, setBlade1Far] = useState(null);
     const [blade2Far, setBlade2Far] = useState(null);
+    const [blade1Angle, setBlade1Angle] = useState(null);
+    const [blade2Angle, setBlade2Angle] = useState(null);
     const [bladeIntersection1, setBladeIntersection1] = useState(null);
     const [bladeIntersection2, setBladeIntersection2] = useState(null);
     const [bladeContour, setBladeContour] = useState(null);
@@ -128,6 +130,16 @@ export default function AppTest() {
                 setBlade2Far(blade2FarPoint);
                 setBlade1YPoints([highest, lowest]);
                 setBlade2YPoints([highest2, lowest2]);
+                const blade1Angle = Utils.computeBladeAngle(
+                    points,
+                    blade1FarPoint.point,
+                );
+                const blade2Angle = Utils.computeBladeAngle(
+                    points,
+                    blade2FarPoint.point,
+                );
+                setBlade1Angle(blade1Angle);
+                setBlade2Angle(blade2Angle);
             });
         });
     }, [aligned]);
@@ -397,6 +409,15 @@ export default function AppTest() {
                                 <br />
                                 <strong>Blade 1 Farthest Point:</strong>{' '}
                                 <Vec3Display vec={blade1Far.point} />
+                                <br />
+                                <strong>Blade 1 Angle:</strong>{' '}
+                                <span
+                                    style={{
+                                        color: '#f87171',
+                                        fontWeight: 'bold',
+                                    }}>
+                                    {blade1Angle.toFixed(2)}
+                                </span>
                             </div>
                         )}
 
@@ -413,6 +434,15 @@ export default function AppTest() {
                                 <br />
                                 <strong>Blade 2 Farthest Point:</strong>{' '}
                                 <Vec3Display vec={blade2Far.point} />
+                                <br />
+                                <strong>Blade 2 Angle:</strong>{' '}
+                                <span
+                                    style={{
+                                        color: '#f87171',
+                                        fontWeight: 'bold',
+                                    }}>
+                                    {blade2Angle.toFixed(2)}
+                                </span>
                             </div>
                         )}
                     </div>

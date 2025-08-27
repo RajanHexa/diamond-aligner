@@ -226,4 +226,20 @@ export class Utils {
         link.download = filename;
         link.click();
     }
+    static computeBladeAngle(intersectionPoint, farPoint) {
+        let intersectionClosestPoint = null;
+        const point1Distance = intersectionPoint[0].distanceTo(farPoint);
+        const point2Distance = intersectionPoint[1].distanceTo(farPoint);
+        if (point1Distance < point2Distance) {
+            intersectionClosestPoint = intersectionPoint[0];
+        } else {
+            intersectionClosestPoint = intersectionPoint[1];
+        }
+        const direction = new THREE.Vector3()
+            .subVectors(farPoint, intersectionClosestPoint)
+            .normalize();
+        const angle = direction.angleTo(new THREE.Vector3(1, 0, 0));
+        const deg = THREE.MathUtils.radToDeg(angle);
+        return deg;
+    }
 }

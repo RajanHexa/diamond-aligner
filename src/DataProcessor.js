@@ -111,31 +111,31 @@ export class DataProcesser {
         // === Compute distances & angles ===
         const blade1Distance = blade1FarPoint.distance;
         const blade2Distance = blade2FarPoint.distance;
-        // const blade1Angle = Utils.computeBladeAngle(
-        //     intersectionPoint,
-        //     blade1FarPoint.point,
-        // );
-        // const blade2Angle = Utils.computeBladeAngle(
-        //     intersectionPoint,
-        //     blade2FarPoint.point,
-        // );
+        const blade1Angle = Utils.computeBladeAngle(
+            intersectionPoint,
+            blade1FarPoint.point,
+        );
+        const blade2Angle = Utils.computeBladeAngle(
+            intersectionPoint,
+            blade2FarPoint.point,
+        );
 
         // === Construct data object ===
         const data = {
-            RotationR: degR,
-            RotationW: degW,
+            RotationR: 270 - degR,
+            RotationW: 90 - degW,
             IntersectionTop: intersectionPoint[0].toArray(),
             IntersectionBottom: intersectionPoint[1].toArray(),
             Blade1Top: highest1.toArray(),
             Blade1Bottom: lowest1.toArray(),
             Blade1FarthestPoint: blade1FarPoint.point.toArray(),
             Blade1FarDistance: blade1Distance,
-            Blade1Angle: 0,
+            Blade1Angle: blade1Angle,
             Blade2Top: highest2.toArray(),
             Blade2Bottom: lowest2.toArray(),
             Blade2FarthestPoint: blade2FarPoint.point.toArray(),
             Blade2FarDistance: blade2Distance,
-            Blade2Angle: 0,
+            Blade2Angle: blade2Angle,
         };
 
         console.log('processOBJ: final data', data);
