@@ -253,7 +253,8 @@ export class Utils {
             .subVectors(farPoint, intersectionClosestPoint)
             .normalize();
         const angle = direction.angleTo(new THREE.Vector3(1, 0, 0));
+        const distance = intersectionClosestPoint.distanceTo(farPoint);
         const deg = THREE.MathUtils.radToDeg(angle);
-        return deg;
+        return { deg, distance };
     }
 }

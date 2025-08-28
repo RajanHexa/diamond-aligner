@@ -425,7 +425,7 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade1Far.distance.toFixed(2)}
+                                        {blade1Angle.distance.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
@@ -439,7 +439,7 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade1Angle.toFixed(2)}
+                                        {blade1Angle.deg.toFixed(2)}
                                     </span>
                                 </div>
                             )}
@@ -452,7 +452,7 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade2Far.distance.toFixed(2)}
+                                        {blade2Angle.distance.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
@@ -466,7 +466,7 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade2Angle.toFixed(2)}
+                                        {blade2Angle.deg.toFixed(2)}
                                     </span>
                                 </div>
                             )}
@@ -552,7 +552,7 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade1Far.distance.toFixed(2)}
+                                        {blade1Angle.distance.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
@@ -566,7 +566,7 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade1Angle.toFixed(2)}
+                                        {blade1Angle.deg.toFixed(2)}
                                     </span>
                                 </div>
                             )}
@@ -579,13 +579,13 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade2Far.distance.toFixed(2)}
+                                        {blade2Angle.distance.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
                                         Blade 2 Farthest Point:
                                     </strong>{' '}
-                                    <Vec3Display vec={blade1Far.localPoint} />
+                                    <Vec3Display vec={blade2Far.localPoint} />
                                     <br />
                                     <strong>Blade 2 Angle:</strong>{' '}
                                     <span
@@ -593,7 +593,7 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade2Angle.toFixed(2)}
+                                        {blade2Angle.deg.toFixed(2)}
                                     </span>
                                 </div>
                             )}
