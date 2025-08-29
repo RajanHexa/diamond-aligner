@@ -48,6 +48,7 @@ export class DataProcesser {
             mesh1,
             planeInstance1,
         );
+        let localIntersectionPoint;
         let intersectionPoint = ClipPlane.getContourPlaneIntersection(
             planeContour1,
             planeInstance2,
@@ -65,6 +66,8 @@ export class DataProcesser {
                 planeInstance2,
             );
         }
+        const copy = intersectionPoint.map((v) => v.clone());
+        localIntersectionPoint = copy
 
         // === Rotation calculations ===
         const angleX = Utils.angleToEqualizeZ(
@@ -86,10 +89,18 @@ export class DataProcesser {
         group.rotateOnAxis(new THREE.Vector3(0, 0, 1), angleZ);
 
         // === Mesh highest/lowest ===
-        const { highest: highest1, lowest: lowest1 } =
-            Utils.getMeshHighestLowest(mesh1);
-        const { highest: highest2, lowest: lowest2 } =
-            Utils.getMeshHighestLowest(mesh2);
+        const {
+            highest: highest1,
+            lowest: lowest1,
+            localHighest,
+            localLowest,
+        } = Utils.getMeshHighestLowest(mesh1);
+        const {
+            highest: highest2,
+            lowest: lowest2,
+            localHighest: localHighest2,
+            localLowest: localLowest2,
+        } = Utils.getMeshHighestLowest(mesh2);
 
         // === Line for farthest point calculation ===
         const line = new THREE.Line3(
@@ -108,9 +119,6 @@ export class DataProcesser {
             intersectionPoint[0],
         );
 
-        // === Compute distances & angles ===
-        const blade1Distance = blade1FarPoint.distance;
-        const blade2Distance = blade2FarPoint.distance;
         const blade1Angle = Utils.computeBladeAngle(
             intersectionPoint,
             blade1FarPoint.point,
@@ -126,16 +134,24 @@ export class DataProcesser {
             RotationW: 90 - degW,
             IntersectionTop: intersectionPoint[0].toArray(),
             IntersectionBottom: intersectionPoint[1].toArray(),
+            LocalIntersectionTop: localIntersectionPoint[0].toArray(),
+            LocalIntersectionBottom: localIntersectionPoint[1].toArray(),
             Blade1Top: highest1.toArray(),
             Blade1Bottom: lowest1.toArray(),
             Blade1FarthestPoint: blade1FarPoint.point.toArray(),
-            Blade1FarDistance: blade1Distance,
-            Blade1Angle: blade1Angle,
+            Blade1LocalFarthestPoint: blade1FarPoint.localPoint.toArray(),
+            Blade1FarDistance: blade1Angle.distance,
+            Blade1Angle: blade1Angle.deg,
             Blade2Top: highest2.toArray(),
             Blade2Bottom: lowest2.toArray(),
             Blade2FarthestPoint: blade2FarPoint.point.toArray(),
-            Blade2FarDistance: blade2Distance,
-            Blade2Angle: blade2Angle,
+            Blade2LocalFarthestPoint: blade2FarPoint.localPoint.toArray(),
+            Blade2FarDistance: blade2Angle.distance,
+            Blade2Angle: blade2Angle.deg,
+            Blade1LocalTop: localHighest.toArray(),
+            Blade1LocalBottom: localLowest.toArray(),
+            Blade2LocalTop: localHighest2.toArray(),
+            Blade2LocalBottom: localLowest2.toArray(),
         };
 
         console.log('processOBJ: final data', data);
