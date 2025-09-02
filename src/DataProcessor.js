@@ -127,12 +127,12 @@ export class DataProcesser {
             intersectionPoint,
             blade2FarPoint.point,
         );
-        const cameraIntersectionData = Utils.getCameraData(
+        const cameraIntersectionData = FaceExtractor.getCameraData(
             intersectionPoint,
             highest1,
             highest2,
         );
-        const cameraIntersectionDataLocal = Utils.getCameraData(
+        const cameraIntersectionDataLocal = FaceExtractor.getCameraData(
             intersectionPoint,
             localIntersectionPoint,
             localHighest,
