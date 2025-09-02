@@ -132,6 +132,12 @@ export class DataProcesser {
             highest1,
             highest2,
         );
+        const cameraIntersectionDataLocal = Utils.getCameraData(
+            intersectionPoint,
+            localIntersectionPoint,
+            localHighest,
+            localHighest2,
+        );
 
         // === Construct data object ===
         const data = {
@@ -161,6 +167,12 @@ export class DataProcesser {
                 cameraIntersectionData.cameraDistanceIntersection.toFixed(2),
             CameraDistanceToFarPoint:
                 cameraIntersectionData.cameraDistanceToTopPoint.toFixed(2),
+            CameraIntersectionDistanceLocal:
+                cameraIntersectionDataLocal.cameraDistanceIntersection.toFixed(
+                    2,
+                ),
+            CameraDistanceToFarPointLocal:
+                cameraIntersectionDataLocal.cameraDistanceToTopPoint.toFixed(2),
         };
 
         console.log('processOBJ: final data', data);

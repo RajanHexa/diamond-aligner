@@ -279,4 +279,50 @@ export class FaceExtractor {
             cameraDistanceToTopPoint,
         };
     }
+    static getCameraDataLocal(
+        intersectionPoint,
+        intersectionPointLocal,
+        blade1TopPoint,
+        blade2TopPoint,
+    ) {
+        let cameraPosition = null;
+        let cameraDistanceIntersection = null;
+        let cameraDistanceToTopPoint = null;
+        if (intersectionPoint[0].y > intersectionPoint[0].y) {
+            const directionIntersection = intersectionPoint[1]
+                .clone()
+                .sub(intersectionPoint[0].clone());
+            cameraPosition = new THREE.Vector3()
+                .copy(intersectionPoint[0].clone())
+                .add(
+                    new THREE.Vector3()
+                        .copy(directionIntersection.clone())
+                        .multiplyScalar(5000),
+                );
+            cameraDistanceIntersection = cameraPosition.distanceTo(
+                intersectionPointLocal[0],
+            );
+        } else {
+            const directionIntersection = intersectionPoint[0]
+                .clone()
+                .sub(intersectionPoint[1].clone());
+            cameraPosition = new THREE.Vector3()
+                .copy(intersectionPoint[1].clone())
+                .add(
+                    new THREE.Vector3()
+                        .copy(directionIntersection.clone())
+                        .multiplyScalar(5000),
+                );
+            cameraDistanceIntersection = cameraPosition.distanceTo(
+                intersectionPointLocal[1],
+            );
+        }
+        const distanceBlade1 = cameraPosition.distanceTo(blade1TopPoint);
+        const distanceBlade2 = cameraPosition.distanceTo(blade2TopPoint);
+        cameraDistanceToTopPoint = Math.min(distanceBlade1, distanceBlade2);
+        return {
+            cameraDistanceIntersection,
+            cameraDistanceToTopPoint,
+        };
+    }
 }
