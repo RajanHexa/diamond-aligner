@@ -39,6 +39,7 @@ export default function AppTest() {
     const [bladeIntersection2, setBladeIntersection2] = useState(null);
     const [bladeContour, setBladeContour] = useState(null);
     const [contour1, setContour1] = useState(null);
+    const [cameraDistanceData, setCameraDistanceData] = useState(null);
 
     const handleApply = () => {
         if (midPlane1 && midPlane2) {
@@ -152,6 +153,12 @@ export default function AppTest() {
                 );
                 setBlade1Angle(blade1Angle);
                 setBlade2Angle(blade2Angle);
+                const data = FaceExtractor.getCameraData(
+                    points,
+                    highest,
+                    highest2,
+                );
+                setCameraDistanceData(data);
             });
         });
     }, [aligned]);
@@ -466,8 +473,33 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade2Angle.deg.toFixed(2)}
+                                        {blade1Angle.deg.toFixed(2)}
                                     </span>
+                                    <br />
+                                    <strong>
+                                        Camera Intersection Distance:
+                                    </strong>
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {cameraDistanceData.cameraDistanceIntersection.toFixed(
+                                            2,
+                                        )}
+                                    </span>
+                                    <br />
+                                    <strong>Camera Distance TopPoint:</strong>
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {cameraDistanceData.cameraDistanceToTopPoint.toFixed(
+                                            2,
+                                        )}
+                                    </span>
+                                    <br />
                                 </div>
                             )}
                         </div>

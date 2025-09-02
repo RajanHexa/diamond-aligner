@@ -67,7 +67,7 @@ export class DataProcesser {
             );
         }
         const copy = intersectionPoint.map((v) => v.clone());
-        localIntersectionPoint = copy
+        localIntersectionPoint = copy;
 
         // === Rotation calculations ===
         const angleX = Utils.angleToEqualizeZ(
@@ -127,6 +127,11 @@ export class DataProcesser {
             intersectionPoint,
             blade2FarPoint.point,
         );
+        const cameraIntersectionData = Utils.getCameraData(
+            intersectionPoint,
+            highest1,
+            highest2,
+        );
 
         // === Construct data object ===
         const data = {
@@ -152,6 +157,10 @@ export class DataProcesser {
             Blade1LocalBottom: localLowest.toArray(),
             Blade2LocalTop: localHighest2.toArray(),
             Blade2LocalBottom: localLowest2.toArray(),
+            CameraIntersectionDistance:
+                cameraIntersectionData.cameraDistanceIntersection.toFixed(2),
+            CameraDistanceToFarPoint:
+                cameraIntersectionData.cameraDistanceToTopPoint.toFixed(2),
         };
 
         console.log('processOBJ: final data', data);
