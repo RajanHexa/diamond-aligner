@@ -132,7 +132,7 @@ export class DataProcesser {
             highest1,
             highest2,
         );
-        const cameraIntersectionDataLocal = FaceExtractor.getCameraData(
+        const cameraIntersectionDataLocal = FaceExtractor.getCameraDataLocal(
             intersectionPoint,
             localIntersectionPoint,
             localHighest,
