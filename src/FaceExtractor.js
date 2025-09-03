@@ -242,7 +242,7 @@ export class FaceExtractor {
         let cameraPosition = null;
         let cameraDistanceIntersection = null;
         let cameraDistanceToTopPoint = null;
-        if (intersectionPoint[0].y > intersectionPoint[0].y) {
+        if (intersectionPoint[0].y > intersectionPoint[1].y) {
             const directionIntersection = intersectionPoint[1]
                 .clone()
                 .sub(intersectionPoint[0].clone());
@@ -250,7 +250,7 @@ export class FaceExtractor {
                 .copy(intersectionPoint[0].clone())
                 .add(
                     new THREE.Vector3()
-                        .copy(directionIntersection.clone())
+                        .copy(directionIntersection.clone().normalize())
                         .multiplyScalar(5000),
                 );
             cameraDistanceIntersection = cameraPosition.distanceTo(
@@ -264,7 +264,7 @@ export class FaceExtractor {
                 .copy(intersectionPoint[1].clone())
                 .add(
                     new THREE.Vector3()
-                        .copy(directionIntersection.clone())
+                        .copy(directionIntersection.clone().normalize())
                         .multiplyScalar(5000),
                 );
             cameraDistanceIntersection = cameraPosition.distanceTo(
@@ -288,7 +288,7 @@ export class FaceExtractor {
         let cameraPosition = null;
         let cameraDistanceIntersection = null;
         let cameraDistanceToTopPoint = null;
-        if (intersectionPoint[0].y > intersectionPoint[0].y) {
+        if (intersectionPoint[0].y > intersectionPoint[1].y) {
             const directionIntersection = intersectionPoint[1]
                 .clone()
                 .sub(intersectionPoint[0].clone());
@@ -296,7 +296,7 @@ export class FaceExtractor {
                 .copy(intersectionPoint[0].clone())
                 .add(
                     new THREE.Vector3()
-                        .copy(directionIntersection.clone())
+                        .copy(directionIntersection.clone().normalize())
                         .multiplyScalar(5000),
                 );
             cameraDistanceIntersection = cameraPosition.distanceTo(
@@ -310,7 +310,7 @@ export class FaceExtractor {
                 .copy(intersectionPoint[1].clone())
                 .add(
                     new THREE.Vector3()
-                        .copy(directionIntersection.clone())
+                        .copy(directionIntersection.clone().normalize())
                         .multiplyScalar(5000),
                 );
             cameraDistanceIntersection = cameraPosition.distanceTo(
