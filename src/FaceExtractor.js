@@ -239,40 +239,16 @@ export class FaceExtractor {
         return { normal, centroid };
     }
     static getCameraData(intersectionPoint, blade1TopPoint, blade2TopPoint) {
-        let cameraPosition = null;
+        const fixedYPoint = 10000;
         let cameraDistanceIntersection = null;
         let cameraDistanceToTopPoint = null;
         if (intersectionPoint[0].y > intersectionPoint[1].y) {
-            const directionIntersection = intersectionPoint[1]
-                .clone()
-                .sub(intersectionPoint[0].clone());
-            cameraPosition = new THREE.Vector3()
-                .copy(intersectionPoint[0].clone())
-                .add(
-                    new THREE.Vector3()
-                        .copy(directionIntersection.clone().normalize())
-                        .multiplyScalar(5000),
-                );
-            cameraDistanceIntersection = cameraPosition.distanceTo(
-                intersectionPoint[0],
-            );
+            cameraDistanceIntersection = fixedYPoint - intersectionPoint[0].y;
         } else {
-            const directionIntersection = intersectionPoint[0]
-                .clone()
-                .sub(intersectionPoint[1].clone());
-            cameraPosition = new THREE.Vector3()
-                .copy(intersectionPoint[1].clone())
-                .add(
-                    new THREE.Vector3()
-                        .copy(directionIntersection.clone().normalize())
-                        .multiplyScalar(5000),
-                );
-            cameraDistanceIntersection = cameraPosition.distanceTo(
-                intersectionPoint[1],
-            );
+            cameraDistanceIntersection = fixedYPoint - intersectionPoint[1].y;
         }
-        const distanceBlade1 = cameraPosition.distanceTo(blade1TopPoint);
-        const distanceBlade2 = cameraPosition.distanceTo(blade2TopPoint);
+        const distanceBlade1 = fixedYPoint - blade1TopPoint.y;
+        const distanceBlade2 = fixedYPoint - blade2TopPoint.y;
         cameraDistanceToTopPoint = Math.min(distanceBlade1, distanceBlade2);
         return {
             cameraDistanceIntersection,
@@ -285,40 +261,18 @@ export class FaceExtractor {
         blade1TopPoint,
         blade2TopPoint,
     ) {
-        let cameraPosition = null;
+        const fixedYPoint = 10000;
         let cameraDistanceIntersection = null;
         let cameraDistanceToTopPoint = null;
         if (intersectionPoint[0].y > intersectionPoint[1].y) {
-            const directionIntersection = intersectionPoint[1]
-                .clone()
-                .sub(intersectionPoint[0].clone());
-            cameraPosition = new THREE.Vector3()
-                .copy(intersectionPoint[0].clone())
-                .add(
-                    new THREE.Vector3()
-                        .copy(directionIntersection.clone().normalize())
-                        .multiplyScalar(5000),
-                );
-            cameraDistanceIntersection = cameraPosition.distanceTo(
-                intersectionPointLocal[0],
-            );
+            cameraDistanceIntersection =
+                fixedYPoint - intersectionPointLocal[0].y;
         } else {
-            const directionIntersection = intersectionPoint[0]
-                .clone()
-                .sub(intersectionPoint[1].clone());
-            cameraPosition = new THREE.Vector3()
-                .copy(intersectionPoint[1].clone())
-                .add(
-                    new THREE.Vector3()
-                        .copy(directionIntersection.clone().normalize())
-                        .multiplyScalar(5000),
-                );
-            cameraDistanceIntersection = cameraPosition.distanceTo(
-                intersectionPointLocal[1],
-            );
+            cameraDistanceIntersection =
+                fixedYPoint - intersectionPointLocal[1].y;
         }
-        const distanceBlade1 = cameraPosition.distanceTo(blade1TopPoint);
-        const distanceBlade2 = cameraPosition.distanceTo(blade2TopPoint);
+        const distanceBlade1 = fixedYPoint - blade1TopPoint.y;
+        const distanceBlade2 = fixedYPoint - blade2TopPoint.y;
         cameraDistanceToTopPoint = Math.min(distanceBlade1, distanceBlade2);
         return {
             cameraDistanceIntersection,
