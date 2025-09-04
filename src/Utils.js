@@ -249,12 +249,34 @@ export class Utils {
         } else {
             intersectionClosestPoint = intersectionPoint[1];
         }
-        const direction = new THREE.Vector3()
-            .subVectors(farPoint, intersectionClosestPoint)
-            .normalize();
-        const angle = direction.angleTo(new THREE.Vector3(1, 0, 0));
+        const p2 = new THREE.Vector3()
+            .copy(intersectionClosestPoint.clone())
+            .add(new THREE.Vector3(-1, 0, 0).multiplyScalar(100));
         const distance = intersectionClosestPoint.distanceTo(farPoint);
-        const deg = THREE.MathUtils.radToDeg(angle);
-        return { deg, distance };
+        const angleSigned = this.signedAngleBetweenLinesXZ(
+            farPoint.clone(),
+            p2.clone(),
+            intersectionClosestPoint.clone(),
+        );
+        return { deg: angleSigned, distance };
+    }
+    static signedAngleBetweenLinesXZ(p1, p2, origin) {
+        // v1 = line from origin -> p1
+        const v1 = new THREE.Vector3().subVectors(p1, origin);
+        v1.y = 0; // project to XZ plane
+        v1.normalize();
+        // v2 = line from origin -> p2
+        const v2 = new THREE.Vector3().subVectors(p2, origin);
+        v2.y = 0;
+        v2.normalize();
+        // Dot product gives cos(theta)
+        const dot = THREE.MathUtils.clamp(v1.dot(v2), -1, 1);
+        // Cross product → use Y component to know clockwise / counterclockwise
+        const cross = new THREE.Vector3().crossVectors(v1, v2);
+        // atan2(sin, cos) → signed angle in [-PI, PI]
+        let angle = Math.atan2(cross.y, dot);
+        // convert to [0, 360)
+        angle = THREE.MathUtils.radToDeg(angle);
+        return (angle + 360) % 360;
     }
 }

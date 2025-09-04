@@ -166,7 +166,6 @@ export default function AppTest() {
                     localHighest,
                     localHighest2,
                 );
-                console.log(data, dataLocal);
                 setCameraDistanceData(data);
                 setCameraDistanceDataLocal(dataLocal);
             });
@@ -483,7 +482,7 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade1Angle.deg.toFixed(2)}
+                                        {blade2Angle.deg.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
