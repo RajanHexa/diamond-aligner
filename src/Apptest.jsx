@@ -31,17 +31,15 @@ export default function AppTest() {
     const [blade1LocalYPoints, setBlade1LocalYPoints] = useState(null);
     const [blade2LocalYPoints, setBlade2LocalYPoints] = useState(null);
     const [pointsLocal, setPointsLocal] = useState(null);
-    const [blade1Data, setBlade1Data] = useState(null);
-    const [blade2Data, setBlade2Data] = useState(null);
-    // const [blade1Angle, setBlade1Angle] = useState(null);
-    // const [blade2Angle, setBlade2Angle] = useState(null);
+    const [blade1Far, setBlade1Far] = useState(null);
+    const [blade2Far, setBlade2Far] = useState(null);
+    const [blade1Angle, setBlade1Angle] = useState(null);
+    const [blade2Angle, setBlade2Angle] = useState(null);
     const [bladeIntersection1, setBladeIntersection1] = useState(null);
     const [bladeIntersection2, setBladeIntersection2] = useState(null);
     const [bladeContour, setBladeContour] = useState(null);
     const [contour1, setContour1] = useState(null);
     const [cameraDistanceData, setCameraDistanceData] = useState(null);
-    const [threePlane1, setThreePlane1] = useState(null);
-    const [threePlane2, setThreePlane2] = useState(null);
     const [cameraDistanceDataLocal, setCameraDistanceDataLocal] =
         useState(null);
 
@@ -66,8 +64,6 @@ export default function AppTest() {
                 planeInstance2,
                 planeInstance1,
             );
-            setThreePlane1(planeInstance1);
-            setThreePlane2(planeInstance2);
             if (point.length == 0) {
                 const planeInstance1 = new THREE.Plane();
                 planeInstance1.setFromNormalAndCoplanarPoint(
@@ -132,33 +128,33 @@ export default function AppTest() {
                     localHighest: localHighest2,
                     localLowest: localLowest2,
                 } = Utils.getMeshHighestLowest(model2);
-                const blade1FarPoint = Utils.getFarthestPointsFromLine(
+                const line = new THREE.Line3(points[0], points[1]);
+                const blade1FarPoint = Utils.getFarthestPointFromLine(
                     model1,
-                    points,
-                    midPlane1,
+                    line,
+                    points[0],
                 );
-                const blade2FarPoint = Utils.getFarthestPointsFromLine(
+                const blade2FarPoint = Utils.getFarthestPointFromLine(
                     model2,
-                    points,
-                    midPlane2,
+                    line,
+                    points[0],
                 );
-                console.log(blade1FarPoint, blade2FarPoint);
-                setBlade1Data(blade1FarPoint);
-                setBlade2Data(blade2FarPoint);
+                setBlade1Far(blade1FarPoint);
+                setBlade2Far(blade2FarPoint);
                 setBlade1YPoints([highest, lowest]);
                 setBlade2YPoints([highest2, lowest2]);
                 setBlade1LocalYPoints([localHighest, localLowest]);
                 setBlade2LocalYPoints([localHighest2, localLowest2]);
-                // const blade1Angle = Utils.computeBladeAngleAndDistance(
-                //     points,
-                //     blade1FarPoint.point,
-                // );
-                // const blade2Angle = Utils.computeBladeAngleAndDistance(
-                //     points,
-                //     blade2FarPoint.point,
-                // );
-                // setBlade1Angle(blade1Angle);
-                // setBlade2Angle(blade2Angle);
+                const blade1Angle = Utils.computeBladeAngle(
+                    points,
+                    blade1FarPoint.point,
+                );
+                const blade2Angle = Utils.computeBladeAngle(
+                    points,
+                    blade2FarPoint.point,
+                );
+                setBlade1Angle(blade1Angle);
+                setBlade2Angle(blade2Angle);
                 const data = FaceExtractor.getCameraData(
                     points,
                     highest,
@@ -437,7 +433,7 @@ export default function AppTest() {
                                 </>
                             )}
 
-                            {blade1Data && (
+                            {blade1Far && (
                                 <div style={{ marginTop: '8px' }}>
                                     <strong>Blade 1 Farthest Distance:</strong>{' '}
                                     <span
@@ -445,37 +441,26 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade1Data.distance.toFixed(2)}
+                                        {blade1Angle.distance.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
-                                        Blade 1 Farthest Point 1:
+                                        Blade 1 Farthest Point:
                                     </strong>{' '}
-                                    <Vec3Display vec={blade1Data.farPoint1} />
+                                    <Vec3Display vec={blade1Far.point} />
                                     <br />
-                                    {blade1Data.farPoint2 && (
-                                        <>
-                                            <strong>
-                                                Blade 1 Farthest Point 2:
-                                            </strong>
-                                            <Vec3Display
-                                                vec={blade1Data.farPoint2}
-                                            />
-                                            <br />
-                                        </>
-                                    )}
                                     <strong>Blade 1 Angle:</strong>{' '}
                                     <span
                                         style={{
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade1Data.angle.toFixed(2)}
+                                        {blade1Angle.deg.toFixed(2)}
                                     </span>
                                 </div>
                             )}
 
-                            {blade2Data && (
+                            {blade2Far && (
                                 <div style={{ marginTop: '8px' }}>
                                     <strong>Blade 2 Farthest Distance:</strong>{' '}
                                     <span
@@ -483,64 +468,47 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade2Data.distance.toFixed(2)}
+                                        {blade2Angle.distance.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
-                                        Blade 2 Farthest Point 1:
+                                        Blade 2 Farthest Point:
                                     </strong>{' '}
-                                    <Vec3Display vec={blade2Data.farPoint1} />
+                                    <Vec3Display vec={blade2Far.point} />
                                     <br />
-                                    {blade2Data.farPoint2 && (
-                                        <>
-                                            <strong>
-                                                Blade 1 Farthest Point 2:
-                                            </strong>
-                                            <Vec3Display
-                                                vec={blade2Data.farPoint2}
-                                            />
-                                            <br />
-                                        </>
-                                    )}
                                     <strong>Blade 2 Angle:</strong>{' '}
                                     <span
                                         style={{
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade2Data.angle.toFixed(2)}
+                                        {blade2Angle.deg.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
                                         Camera Intersection Distance:
                                     </strong>
-                                    {cameraDistanceData && (
-                                        <>
-                                            <span
-                                                style={{
-                                                    color: '#f87171',
-                                                    fontWeight: 'bold',
-                                                }}>
-                                                {cameraDistanceData.cameraDistanceIntersection.toFixed(
-                                                    2,
-                                                )}
-                                            </span>
-                                            <br />
-                                            <strong>
-                                                Camera Distance TopPoint:
-                                            </strong>
-                                            <span
-                                                style={{
-                                                    color: '#f87171',
-                                                    fontWeight: 'bold',
-                                                }}>
-                                                {cameraDistanceData.cameraDistanceToTopPoint.toFixed(
-                                                    2,
-                                                )}
-                                            </span>
-                                            <br />
-                                        </>
-                                    )}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {cameraDistanceData.cameraDistanceIntersection.toFixed(
+                                            2,
+                                        )}
+                                    </span>
+                                    <br />
+                                    <strong>Camera Distance TopPoint:</strong>
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {cameraDistanceData.cameraDistanceToTopPoint.toFixed(
+                                            2,
+                                        )}
+                                    </span>
+                                    <br />
                                 </div>
                             )}
                         </div>
@@ -617,7 +585,7 @@ export default function AppTest() {
                                 </>
                             )}
 
-                            {blade1Data && (
+                            {blade1Far && (
                                 <div style={{ marginTop: '8px' }}>
                                     <strong>Blade 1 Farthest Distance:</strong>{' '}
                                     <span
@@ -625,37 +593,26 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade1Data.distance.toFixed(2)}
+                                        {blade1Angle.distance.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
-                                        Blade 1 Farthest Point 1:
+                                        Blade 1 Farthest Point:
                                     </strong>{' '}
-                                    <Vec3Display vec={blade1Data.localPoint1} />
+                                    <Vec3Display vec={blade1Far.localPoint} />
                                     <br />
-                                    {blade1Data.localPoint2 && (
-                                        <>
-                                            <strong>
-                                                Blade 1 Farthest Point 2:
-                                            </strong>
-                                            <Vec3Display
-                                                vec={blade1Data.localPoint2}
-                                            />
-                                            <br />
-                                        </>
-                                    )}
                                     <strong>Blade 1 Angle:</strong>{' '}
                                     <span
                                         style={{
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade1Data.angle.toFixed(2)}
+                                        {blade1Angle.deg.toFixed(2)}
                                     </span>
                                 </div>
                             )}
 
-                            {blade2Data && (
+                            {blade2Far && (
                                 <div style={{ marginTop: '8px' }}>
                                     <strong>Blade 2 Farthest Distance:</strong>{' '}
                                     <span
@@ -663,64 +620,47 @@ export default function AppTest() {
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade2Data.distance.toFixed(2)}
+                                        {blade2Angle.distance.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
-                                        Blade 2 Farthest Point 1:
+                                        Blade 2 Farthest Point:
                                     </strong>{' '}
-                                    <Vec3Display vec={blade2Data.localPoint1} />
+                                    <Vec3Display vec={blade2Far.localPoint} />
                                     <br />
-                                    {blade2Data.localPoint2 && (
-                                        <>
-                                            <strong>
-                                                Blade 1 Farthest Point 2:
-                                            </strong>
-                                            <Vec3Display
-                                                vec={blade2Data.localPoint2}
-                                            />
-                                            <br />
-                                        </>
-                                    )}
                                     <strong>Blade 2 Angle:</strong>{' '}
                                     <span
                                         style={{
                                             color: '#f87171',
                                             fontWeight: 'bold',
                                         }}>
-                                        {blade2Data.angle.toFixed(2)}
+                                        {blade2Angle.deg.toFixed(2)}
                                     </span>
                                     <br />
                                     <strong>
                                         Camera Intersection Distance:
                                     </strong>
-                                    {cameraDistanceData && (
-                                        <>
-                                            <span
-                                                style={{
-                                                    color: '#f87171',
-                                                    fontWeight: 'bold',
-                                                }}>
-                                                {cameraDistanceDataLocal.cameraDistanceIntersection.toFixed(
-                                                    2,
-                                                )}
-                                            </span>
-                                            <br />
-                                            <strong>
-                                                Camera Distance TopPoint:
-                                            </strong>
-                                            <span
-                                                style={{
-                                                    color: '#f87171',
-                                                    fontWeight: 'bold',
-                                                }}>
-                                                {cameraDistanceDataLocal.cameraDistanceToTopPoint.toFixed(
-                                                    2,
-                                                )}
-                                            </span>
-                                            <br />
-                                        </>
-                                    )}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {cameraDistanceDataLocal.cameraDistanceIntersection.toFixed(
+                                            2,
+                                        )}
+                                    </span>
+                                    <br />
+                                    <strong>Camera Distance TopPoint:</strong>
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {cameraDistanceDataLocal.cameraDistanceToTopPoint.toFixed(
+                                            2,
+                                        )}
+                                    </span>
+                                    <br />
                                 </div>
                             )}
                         </div>
@@ -802,30 +742,16 @@ export default function AppTest() {
                         </Sphere>
                     </>
                 )}
-                {blade1Data && (
+                {blade1Far && (
                     <>
-                        <Sphere position={blade1Data.farPoint1} args={[50]}>
+                        <Sphere position={blade1Far.point} args={[50]}>
                             <meshBasicMaterial color={0x00ffee} />
                         </Sphere>
                     </>
                 )}
-                {blade1Data && blade1Data.farPoint2 && (
+                {blade2Far && (
                     <>
-                        <Sphere position={blade1Data.farPoint2} args={[50]}>
-                            <meshBasicMaterial color={0x00ffee} />
-                        </Sphere>
-                    </>
-                )}
-                {blade2Data && (
-                    <>
-                        <Sphere position={blade2Data.farPoint1} args={[50]}>
-                            <meshBasicMaterial color={0x00ffee} />
-                        </Sphere>
-                    </>
-                )}
-                {blade2Data && blade2Data.farPoint2 && (
-                    <>
-                        <Sphere position={blade2Data.farPoint2} args={[50]}>
+                        <Sphere position={blade2Far.point} args={[50]}>
                             <meshBasicMaterial color={0x00ffee} />
                         </Sphere>
                     </>
