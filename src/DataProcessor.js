@@ -109,15 +109,13 @@ export class DataProcesser {
         );
         const blade1FarPoint = Utils.getFarthestPointsFromLine(
             mesh1,
-            line,
-            intersectionPoint[0],
-            planeInstance1,
+            intersectionPoint,
+            midPlane1,
         );
         const blade2FarPoint = Utils.getFarthestPointsFromLine(
             mesh2,
-            line,
-            intersectionPoint[0],
-            planeInstance2,
+            intersectionPoint,
+            midPlane2,
         );
         const cameraIntersectionData = FaceExtractor.getCameraData(
             intersectionPoint,
