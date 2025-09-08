@@ -107,17 +107,25 @@ export class DataProcesser {
             intersectionPoint[0],
             intersectionPoint[1],
         );
-        const blade1FarPoint = Utils.getFarthestPointsFromLine(
+
+        const blade1FarPoint = Utils.getFarthestPointFromLine(
             mesh1,
             line,
             intersectionPoint[0],
-            planeInstance1,
         );
-        const blade2FarPoint = Utils.getFarthestPointsFromLine(
+        const blade2FarPoint = Utils.getFarthestPointFromLine(
             mesh2,
             line,
             intersectionPoint[0],
-            planeInstance2,
+        );
+
+        const blade1Angle = Utils.computeBladeAngle(
+            intersectionPoint,
+            blade1FarPoint.point,
+        );
+        const blade2Angle = Utils.computeBladeAngle(
+            intersectionPoint,
+            blade2FarPoint.point,
         );
         const cameraIntersectionData = FaceExtractor.getCameraData(
             intersectionPoint,
@@ -141,20 +149,16 @@ export class DataProcesser {
             LocalIntersectionBottom: localIntersectionPoint[1].toArray(),
             Blade1Top: highest1.toArray(),
             Blade1Bottom: lowest1.toArray(),
-            Blade1FarthestPoint1: blade1FarPoint.farPoint1.toArray(),
-            Blade1FarthestPoint2: blade1FarPoint.farPoint2.toArray(),
-            Blade1LocalFarthestPoint1: blade1FarPoint.localPoint1.toArray(),
-            Blade1LocalFarthestPoint2: blade1FarPoint.localPoint2.toArray(),
-            Blade1FarDistance: blade1FarPoint.distance,
-            Blade1Angle: blade1FarPoint.angle,
+            Blade1FarthestPoint: blade1FarPoint.point.toArray(),
+            Blade1LocalFarthestPoint: blade1FarPoint.localPoint.toArray(),
+            Blade1FarDistance: blade1Angle.distance,
+            Blade1Angle: blade1Angle.deg,
             Blade2Top: highest2.toArray(),
             Blade2Bottom: lowest2.toArray(),
-            Blade2FarthestPoint1: blade2FarPoint.farPoint1.toArray(),
-            Blade2FarthestPoint2: blade2FarPoint.farPoint2.toArray(),
-            Blade2LocalFarthestPoint1: blade2FarPoint.localPoint1.toArray(),
-            Blade2LocalFarthestPoint2: blade2FarPoint.localPoint2.toArray(),
-            Blade2FarDistance: blade2FarPoint.distance,
-            Blade2Angle: blade2FarPoint.angle,
+            Blade2FarthestPoint: blade2FarPoint.point.toArray(),
+            Blade2LocalFarthestPoint: blade2FarPoint.localPoint.toArray(),
+            Blade2FarDistance: blade2Angle.distance,
+            Blade2Angle: blade2Angle.deg,
             Blade1LocalTop: localHighest.toArray(),
             Blade1LocalBottom: localLowest.toArray(),
             Blade2LocalTop: localHighest2.toArray(),

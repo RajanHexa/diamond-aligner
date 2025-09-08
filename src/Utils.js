@@ -2,7 +2,6 @@ import gsap from 'gsap';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 
 import * as THREE from 'three';
-import { ClipPlane } from './ClipPlane';
 
 export class Utils {
     static angleToEqualize(p1, p2, axis) {
@@ -175,18 +174,12 @@ export class Utils {
      * @param {THREE.Line3} line - The line (start + end)
      * @returns {{point: THREE.Vector3, distance: number}}
      */
-    static getFarthestPointFromLine(mesh, line, planePoint, midPlane) {
-        const planeInstance = new THREE.Plane();
-        planeInstance.setFromNormalAndCoplanarPoint(
-            midPlane.normal,
-            midPlane.centroid,
-        );
+    static getFarthestPointFromLine(mesh, line, planePoint) {
         mesh.updateWorldMatrix(true, false);
 
         // clone geometry and apply world transform
         const geometry = mesh.geometry.clone();
         geometry.applyMatrix4(mesh.matrixWorld);
-        planeInstance.applyMatrix4(mesh.matrixWorld);
 
         const posAttr = geometry.attributes.position;
 
@@ -215,12 +208,7 @@ export class Utils {
             planePoint,
         );
         const projectedFarthestPoint = new THREE.Vector3();
-        const midPlaneProjectPoint = new THREE.Vector3();
-        planeInstance.projectPoint(farthestPoint.clone(), midPlaneProjectPoint);
-        plane.projectPoint(
-            midPlaneProjectPoint.clone(),
-            projectedFarthestPoint,
-        );
+        plane.projectPoint(farthestPoint, projectedFarthestPoint);
         const distance = farthestPoint.distanceTo(projectedFarthestPoint);
         const invertMatrix = mesh.matrixWorld.clone().invert();
         const localProjectedFarthestPoint = new THREE.Vector3().copy(
@@ -228,135 +216,10 @@ export class Utils {
         );
         localProjectedFarthestPoint.applyMatrix4(invertMatrix);
         return {
-            point: midPlaneProjectPoint.clone(),
+            point: projectedFarthestPoint,
             distance: distance,
             localPoint: localProjectedFarthestPoint,
         };
-    }
-    static getFarthestPointsFromLine(mesh, linePoints, plane) {
-        const planeInstance = new THREE.Plane();
-        planeInstance.setFromNormalAndCoplanarPoint(
-            plane.normal,
-            plane.centroid,
-        );
-        mesh.updateWorldMatrix(true, false);
-
-        // Clone geometry in world space
-        const geometry = mesh.geometry.clone();
-        geometry.applyMatrix4(mesh.matrixWorld);
-        planeInstance.applyMatrix4(mesh.matrixWorld);
-
-        const posAttr = geometry.attributes.position;
-        const p0 = linePoints[0].clone();
-        const p1 = linePoints[1].clone();
-        const lineDir = p1.clone().sub(p0);
-        const d = lineDir.clone().normalize();
-
-        let farthestLeft = null,
-            farthestRight = null;
-        let maxLeftDist = -Infinity,
-            maxRightDist = -Infinity;
-
-        const tmp = new THREE.Vector3();
-        const v = new THREE.Vector3();
-
-        for (let i = 0; i < posAttr.count; i++) {
-            tmp.fromBufferAttribute(posAttr, i);
-
-            // Vector from line point to this vertex
-            v.subVectors(tmp, p0);
-
-            // Project onto line to get closest point
-            const t = v.dot(d);
-            const closestPoint = p0.clone().addScaledVector(d, t);
-
-            // Perpendicular vector from line to point
-            const perp = tmp.clone().sub(closestPoint);
-
-            const dist = perp.length();
-
-            // Determine left/right using sign of triple product
-            const sign = Math.sign(
-                planeInstance.normal.dot(d.clone().cross(perp)),
-            );
-            const projectedPoint = new THREE.Vector3();
-            planeInstance.projectPoint(tmp.clone(), projectedPoint);
-            if (sign > 0) {
-                if (dist > maxRightDist) {
-                    maxRightDist = dist;
-                    farthestRight = projectedPoint.clone();
-                }
-            } else if (sign < 0) {
-                if (dist > maxLeftDist) {
-                    maxLeftDist = dist;
-                    farthestLeft = projectedPoint.clone();
-                }
-            }
-        }
-        let distance = null;
-        const topPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(
-            new THREE.Vector3(0, 1, 0),
-            linePoints[0].clone(),
-        );
-        const invertMatrix = mesh.matrixWorld.clone().invert();
-
-        if (farthestLeft && farthestRight) {
-            const projectedTopFarthestPoint1 = new THREE.Vector3();
-            const projectedTopFarthestPoint2 = new THREE.Vector3();
-            topPlane.projectPoint(
-                farthestLeft.clone(),
-                projectedTopFarthestPoint1,
-            );
-            topPlane.projectPoint(
-                farthestRight.clone(),
-                projectedTopFarthestPoint2,
-            );
-            const distance = projectedTopFarthestPoint1.distanceTo(
-                projectedTopFarthestPoint2,
-            );
-            const localProjectedFarthestPoint1 = new THREE.Vector3().copy(
-                farthestLeft.clone(),
-            );
-            const localProjectedFarthestPoint2 = new THREE.Vector3().copy(
-                farthestRight.clone(),
-            );
-            localProjectedFarthestPoint1.applyMatrix4(invertMatrix.clone());
-            localProjectedFarthestPoint2.applyMatrix4(invertMatrix.clone());
-            const angle = this.computeBladeAngle(linePoints[0], farthestRight);
-
-            return {
-                farPoint1: farthestLeft.clone(),
-                farPoint2: farthestRight.clone(),
-                distance: distance,
-                localPoint1: localProjectedFarthestPoint1,
-                localPoint2: localProjectedFarthestPoint2,
-                angle: angle,
-            };
-        } else {
-            const projectedFarPoint = new THREE.Vector3();
-            let intersectionClosestPoint = null;
-            const farPoint = farthestLeft ? farthestLeft : farthestRight;
-            const point1Distance = linePoints[0].distanceTo(farPoint.clone());
-            const point2Distance = linePoints[1].distanceTo(farPoint.clone());
-            if (point1Distance < point2Distance) {
-                intersectionClosestPoint = linePoints[0];
-            } else {
-                intersectionClosestPoint = linePoints[1];
-            }
-            const angle = this.computeBladeAngle(linePoints[0], farPoint);
-            topPlane.projectPoint(farPoint.clone(), projectedFarPoint);
-            distance = intersectionClosestPoint.distanceTo(projectedFarPoint);
-            const localProjectedFarthestPoint1 = new THREE.Vector3().copy(
-                farthestRight.clone(),
-            );
-            localProjectedFarthestPoint1.applyMatrix4(invertMatrix.clone());
-            return {
-                farPoint1: farPoint.clone(),
-                distance: distance,
-                localPoint1: localProjectedFarthestPoint1.clone(),
-                angle: angle,
-            };
-        }
     }
     static exportPointsToOBJ(points) {
         let objData = '';
@@ -377,7 +240,7 @@ export class Utils {
         link.download = filename;
         link.click();
     }
-    static computeBladeAngleAndDistance(intersectionPoint, farPoint) {
+    static computeBladeAngle(intersectionPoint, farPoint) {
         let intersectionClosestPoint = null;
         const point1Distance = intersectionPoint[0].distanceTo(farPoint);
         const point2Distance = intersectionPoint[1].distanceTo(farPoint);
@@ -415,16 +278,5 @@ export class Utils {
         // convert to [0, 360)
         angle = THREE.MathUtils.radToDeg(angle);
         return (angle + 360) % 360;
-    }
-    static computeBladeAngle(intersectionPoint, farPoint) {
-        const p2 = new THREE.Vector3()
-            .copy(intersectionPoint.clone())
-            .add(new THREE.Vector3(-1, 0, 0).multiplyScalar(100));
-        const angleSigned = this.signedAngleBetweenLinesXZ(
-            farPoint.clone(),
-            p2.clone(),
-            intersectionPoint.clone(),
-        );
-        return angleSigned;
     }
 }
