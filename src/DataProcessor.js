@@ -221,15 +221,15 @@ export class DataProcesser {
             farthestPair,
             midPlane,
         );
-        // const cameraIntersectionData = FaceExtractor.getCameraData2(
-        //     farthestPair,
-        //     highest,
-        // );
-        // const cameraIntersectionDataLocal = FaceExtractor.getCameraDataLocal2(
-        //     farthestPair,
-        //     localIntersectionPoint,
-        //     localHighest,
-        // );
+        const cameraIntersectionData = FaceExtractor.getCameraData2(
+            farthestPair,
+            highest,
+        );
+        const cameraIntersectionDataLocal = FaceExtractor.getCameraDataLocal2(
+            farthestPair,
+            localIntersectionPoint,
+            localHighest,
+        );
         const data = {
             RotationR: 270 - degR,
             RotationW: 90 - degW,
@@ -247,6 +247,16 @@ export class DataProcesser {
             BladeAngle: bladeFarPoint.angle,
             BladeLocalTop: localHighest.toArray(),
             BladeLocalBottom: localLowest.toArray(),
+            CameraIntersectionDistance:
+                cameraIntersectionData.cameraDistanceIntersection.toFixed(2),
+            CameraDistanceToFarPoint:
+                cameraIntersectionData.cameraDistanceToTopPoint.toFixed(2),
+            CameraIntersectionDistanceLocal:
+                cameraIntersectionDataLocal.cameraDistanceIntersection.toFixed(
+                    2,
+                ),
+            CameraDistanceToFarPointLocal:
+                cameraIntersectionDataLocal.cameraDistanceToTopPoint.toFixed(2),
         };
         return data;
     }

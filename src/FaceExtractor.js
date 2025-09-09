@@ -266,7 +266,7 @@ export class FaceExtractor {
         const distanceBlade1 = fixedYPoint - topPoint.y;
         return {
             cameraDistanceIntersection,
-            distanceBlade1,
+            cameraDistanceToTopPoint: distanceBlade1,
         };
     }
     static getCameraDataLocal(
@@ -310,7 +310,7 @@ export class FaceExtractor {
         const distanceBlade1 = fixedYPoint - topPoint.y;
         return {
             cameraDistanceIntersection,
-            distanceBlade1,
+            cameraDistanceToTopPoint: distanceBlade1,
         };
     }
 }
