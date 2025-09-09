@@ -244,7 +244,7 @@ export class DataProcesser {
             BladeLocalFarthestPoint1: bladeFarPoint.localPoint1.toArray(),
             BladeLocalFarthestPoint2: bladeFarPoint.localPoint2.toArray(),
             BladeFarDistance: bladeFarPoint.distance,
-            BladeAngle: bladeFarPoint.angle,
+            BladeAngle: bladeFarPoint.deg,
             BladeLocalTop: localHighest.toArray(),
             BladeLocalBottom: localLowest.toArray(),
             CameraIntersectionDistance:
