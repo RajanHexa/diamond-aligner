@@ -11,6 +11,7 @@ import { DataProcesser } from './DataProcessor';
 export default function AppTest() {
     // ✅ Fix here
     window.processData = DataProcesser.processOBJ;
+    window.processSingleBlade = DataProcesser.processSingleBlade;
     const cameraControlsRef = useRef();
     const inputRef1 = useRef();
     const inputRef2 = useRef();
@@ -44,6 +45,9 @@ export default function AppTest() {
         useState(null);
 
     const handleApply = () => {
+        if (midPlane1) {
+            console.log('first');
+        }
         if (midPlane1 && midPlane2) {
             const planeInstance1 = new THREE.Plane();
             planeInstance1.setFromNormalAndCoplanarPoint(

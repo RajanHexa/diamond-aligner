@@ -178,4 +178,95 @@ export class DataProcesser {
         console.log('processOBJ: final data', data);
         return data;
     }
+    static async processSingleBlade(url) {
+        const blobUrl = URL.createObjectURL(new Blob([url]));
+        const mesh = await Utils.loadObjModel(blobUrl);
+        const group = new THREE.Group();
+        const modelGroup = new THREE.Group();
+        modelGroup.add(mesh);
+        group.add(modelGroup);
+        mesh.geometry.rotateY(Math.PI);
+        const midPlane = FaceExtractor.extractMidPlane(mesh);
+        const planeInstance = new THREE.Plane().setFromNormalAndCoplanarPoint(
+            midPlane.normal,
+            midPlane.centroid,
+        );
+        // === Intersection points ===
+        const planeContour = ClipPlane.getIntersectionContour(
+            mesh,
+            planeInstance,
+        );
+        const farthestPair = DataProcesser.findFarthestPoints(planeContour);
+        const localIntersectionPoint = farthestPair.map((v) => v.clone());
+
+        const angleX = Utils.angleToEqualizeZ(farthestPair[0], farthestPair[1]);
+        const degR = THREE.MathUtils.radToDeg(angleX);
+        farthestPair[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
+        farthestPair[1].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
+        modelGroup.rotateOnAxis(new THREE.Vector3(1, 0, 0), angleX);
+
+        const angleZ = Utils.angleZToEqualizeX(
+            farthestPair[0],
+            farthestPair[1],
+        );
+        const degW = THREE.MathUtils.radToDeg(angleZ);
+        farthestPair[0].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
+        farthestPair[1].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
+        group.rotateOnAxis(new THREE.Vector3(0, 0, 1), angleZ);
+
+        const { highest, lowest, localHighest, localLowest } =
+            Utils.getMeshHighestLowest(mesh);
+        const bladeFarPoint = Utils.getFarthestPointsFromLine(
+            mesh,
+            farthestPair,
+            midPlane,
+        );
+        // const cameraIntersectionData = FaceExtractor.getCameraData2(
+        //     farthestPair,
+        //     highest,
+        // );
+        // const cameraIntersectionDataLocal = FaceExtractor.getCameraDataLocal2(
+        //     farthestPair,
+        //     localIntersectionPoint,
+        //     localHighest,
+        // );
+        const data = {
+            RotationR: 270 - degR,
+            RotationW: 90 - degW,
+            IntersectionTop: farthestPair[0].toArray(),
+            IntersectionBottom: farthestPair[1].toArray(),
+            LocalIntersectionTop: localIntersectionPoint[0].toArray(),
+            LocalIntersectionBottom: localIntersectionPoint[1].toArray(),
+            BladeTop: highest.toArray(),
+            BladeBottom: lowest.toArray(),
+            BladeFarthestPoint1: bladeFarPoint.farPoint1.toArray(),
+            BladeFarthestPoint2: bladeFarPoint.farPoint2.toArray(),
+            BladeLocalFarthestPoint1: bladeFarPoint.localPoint1.toArray(),
+            BladeLocalFarthestPoint2: bladeFarPoint.localPoint2.toArray(),
+            BladeFarDistance: bladeFarPoint.distance,
+            BladeAngle: bladeFarPoint.angle,
+            BladeLocalTop: localHighest.toArray(),
+            BladeLocalBottom: localLowest.toArray(),
+        };
+        return data;
+    }
+
+    static findFarthestPoints(points) {
+        if (!points || points.length < 2) return null;
+
+        let maxDist = -Infinity;
+        let farthestPair = [points[0], points[1]];
+
+        for (let i = 0; i < points.length; i++) {
+            for (let j = i + 1; j < points.length; j++) {
+                const dist = points[i].distanceToSquared(points[j]);
+                if (dist > maxDist) {
+                    maxDist = dist;
+                    farthestPair = [points[i], points[j]];
+                }
+            }
+        }
+
+        return farthestPair;
+    }
 }

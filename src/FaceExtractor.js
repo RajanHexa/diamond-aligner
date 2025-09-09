@@ -255,6 +255,20 @@ export class FaceExtractor {
             cameraDistanceToTopPoint,
         };
     }
+    static getCameraData2(intersectionPoint, topPoint) {
+        const fixedYPoint = 10000;
+        let cameraDistanceIntersection = null;
+        if (intersectionPoint[0].y > intersectionPoint[1].y) {
+            cameraDistanceIntersection = fixedYPoint - intersectionPoint[0].y;
+        } else {
+            cameraDistanceIntersection = fixedYPoint - intersectionPoint[1].y;
+        }
+        const distanceBlade1 = fixedYPoint - topPoint.y;
+        return {
+            cameraDistanceIntersection,
+            distanceBlade1,
+        };
+    }
     static getCameraDataLocal(
         intersectionPoint,
         intersectionPointLocal,
@@ -277,6 +291,26 @@ export class FaceExtractor {
         return {
             cameraDistanceIntersection,
             cameraDistanceToTopPoint,
+        };
+    }
+    static getCameraDataLocal2(
+        intersectionPoint,
+        intersectionPointLocal,
+        topPoint,
+    ) {
+        const fixedYPoint = 10000;
+        let cameraDistanceIntersection = null;
+        if (intersectionPoint[0].y > intersectionPoint[1].y) {
+            cameraDistanceIntersection =
+                fixedYPoint - intersectionPointLocal[0].y;
+        } else {
+            cameraDistanceIntersection =
+                fixedYPoint - intersectionPointLocal[1].y;
+        }
+        const distanceBlade1 = fixedYPoint - topPoint.y;
+        return {
+            cameraDistanceIntersection,
+            distanceBlade1,
         };
     }
 }
