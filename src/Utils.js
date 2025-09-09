@@ -317,7 +317,7 @@ export class Utils {
                 distance: distance,
                 localPoint1: localProjectedFarthestPoint1,
                 localPoint2: localProjectedFarthestPoint2,
-                angle: angle,
+                deg: angle.deg,
             };
         } else {
             const projectedFarPoint = new THREE.Vector3();
@@ -341,7 +341,7 @@ export class Utils {
                 farPoint1: farPoint.clone(),
                 distance: distance,
                 localPoint1: localProjectedFarthestPoint1.clone(),
-                angle: angle,
+                deg: angle.deg,
             };
         }
     }
