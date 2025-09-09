@@ -287,7 +287,6 @@ export class Utils {
             linePoints[0].clone(),
         );
         const invertMatrix = mesh.matrixWorld.clone().invert();
-
         if (farthestLeft && farthestRight) {
             const projectedTopFarthestPoint1 = new THREE.Vector3();
             const projectedTopFarthestPoint2 = new THREE.Vector3();
@@ -310,7 +309,7 @@ export class Utils {
             );
             localProjectedFarthestPoint1.applyMatrix4(invertMatrix.clone());
             localProjectedFarthestPoint2.applyMatrix4(invertMatrix.clone());
-            const angle = this.computeBladeAngle(linePoints[0], farthestRight);
+            const angle = this.computeBladeAngle(linePoints, farthestRight);
 
             return {
                 farPoint1: farthestLeft.clone(),
@@ -366,6 +365,7 @@ export class Utils {
         link.click();
     }
     static computeBladeAngle(intersectionPoint, farPoint) {
+        console.log(intersectionPoint, farPoint);
         let intersectionClosestPoint = null;
         const point1Distance = intersectionPoint[0].distanceTo(farPoint);
         const point2Distance = intersectionPoint[1].distanceTo(farPoint);
