@@ -202,7 +202,7 @@ export class DataProcesser {
             midPlane,
         );
         const farthestPoint = farthestPair.perpendicularPoint;
-        const localIntersectionPoint = farthestPair.map((v) => v.clone());
+        const localIntersectionPoint = farthestPoint.map((v) => v.clone());
 
         const angleX = farthestPair.angleR;
         const degR = THREE.MathUtils.radToDeg(angleX);
