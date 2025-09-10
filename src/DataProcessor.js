@@ -199,16 +199,13 @@ export class DataProcesser {
         const farthestPair = DataProcesser.findFarthestPoints(planeContour);
         const localIntersectionPoint = farthestPair.map((v) => v.clone());
 
-        const angleX = Utils.angleToEqualizeZ(farthestPair[0], farthestPair[1]);
+        const angleX = farthestPair.angleR;
         const degR = THREE.MathUtils.radToDeg(angleX);
         farthestPair[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
         farthestPair[1].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
         modelGroup.rotateOnAxis(new THREE.Vector3(1, 0, 0), angleX);
 
-        const angleZ = Utils.angleZToEqualizeX(
-            farthestPair[0],
-            farthestPair[1],
-        );
+        const angleZ = farthestPair.angleW;
         const degW = THREE.MathUtils.radToDeg(angleZ);
         farthestPair[0].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
         farthestPair[1].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
@@ -261,7 +258,7 @@ export class DataProcesser {
         return data;
     }
 
-    static findFarthestPoints(points) {
+    static findFarthestPoints(mesh, points, midPlane) {
         if (!points || points.length < 2) return null;
 
         let maxDist = -Infinity;
@@ -276,7 +273,66 @@ export class DataProcesser {
                 }
             }
         }
+        const direction = new THREE.Vector3()
+            .subVectors(farthestPair[1], farthestPair[0])
+            .normalize();
+        const planeNormal = midPlane.normal.clone();
+        const perpendicularAxis = new THREE.Vector3().crossVectors(
+            direction,
+            planeNormal,
+        );
+        const [p1, p2] = farthestPair;
+        const center = new THREE.Vector3(
+            (p1.x + p2.x) / 2,
+            (p1.y + p2.y) / 2,
+            (p1.z + p2.z) / 2,
+        );
+        const raycaster = new THREE.Raycaster();
+        raycaster.ray.origin.copy(center);
+        raycaster.ray.direction.copy(perpendicularAxis).normalize();
+        let perpendicularPoint = [];
+        const intersections = raycaster.intersectObject(mesh, true);
+        if (intersections.length > 0) {
+            console.log(intersections);
+            perpendicularPoint = [intersections[0].point];
+        }
+        const raycaster2 = new THREE.Raycaster();
+        raycaster2.ray.origin.copy(center);
+        raycaster2.ray.direction
+            .copy(perpendicularAxis.clone().negate())
+            .normalize();
+        const intersections2 = raycaster2.intersectObject(mesh, true);
+        if (intersections2.length > 0) {
+            console.log(intersections2);
 
-        return farthestPair;
+            perpendicularPoint.push(intersections2[0].point);
+        }
+        const angleEqX = Utils.angleToEqualizeZ(
+            farthestPair[0],
+            farthestPair[1],
+        );
+        const angleR = Math.PI / 2 + angleEqX;
+        perpendicularPoint[0].applyAxisAngle(
+            new THREE.Vector3(1, 0, 0),
+            angleR,
+        );
+        perpendicularPoint[1].applyAxisAngle(
+            new THREE.Vector3(1, 0, 0),
+            angleR,
+        );
+
+        const angleW = Utils.angleZToEqualizeX(
+            perpendicularPoint[0],
+            perpendicularPoint[1],
+        );
+        perpendicularPoint[0].applyAxisAngle(
+            new THREE.Vector3(0, 0, 1),
+            angleW,
+        );
+        perpendicularPoint[1].applyAxisAngle(
+            new THREE.Vector3(0, 0, 1),
+            angleW,
+        );
+        return { perpendicularPoint, angleR, angleW };
     }
 }
