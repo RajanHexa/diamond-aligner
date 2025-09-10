@@ -196,7 +196,11 @@ export class DataProcesser {
             mesh,
             planeInstance,
         );
-        const farthestPair = DataProcesser.findFarthestPoints(planeContour);
+        const farthestPair = DataProcesser.findFarthestPoints(
+            mesh,
+            planeContour,
+            midPlane,
+        );
         const farthestPoint = farthestPair.perpendicularPoint;
         const localIntersectionPoint = farthestPair.map((v) => v.clone());
 
