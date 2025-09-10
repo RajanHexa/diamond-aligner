@@ -202,7 +202,7 @@ export class DataProcesser {
             midPlane,
         );
         const farthestPoint = farthestPair.perpendicularPoint;
-        const localIntersectionPoint = farthestPair.localPerpendicularPoint.map(
+        const localIntersectionPoint = farthestPair.localIntersectionPoint.map(
             (v) => v.clone(),
         );
 
@@ -310,7 +310,7 @@ export class DataProcesser {
 
             perpendicularPoint.push(intersections2[0].point);
         }
-        const localPerpendicularPoint = [...perpendicularPoint];
+        const localIntersectionPoint = perpendicularPoint.map((v) => v.clone());
         const angleEqX = Utils.angleToEqualizeZ(
             farthestPair[0],
             farthestPair[1],
@@ -336,6 +336,6 @@ export class DataProcesser {
             new THREE.Vector3(0, 0, 1),
             angleW,
         );
-        return { perpendicularPoint, angleR, angleW, localPerpendicularPoint };
+        return { perpendicularPoint, angleR, angleW, localIntersectionPoint };
     }
 }
