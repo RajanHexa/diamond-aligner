@@ -310,6 +310,7 @@ export class DataProcesser {
 
             perpendicularPoint.push(intersections2[0].point);
         }
+        const localPerpendicularPoint = [...perpendicularPoint];
         const angleEqX = Utils.angleToEqualizeZ(
             farthestPair[0],
             farthestPair[1],
@@ -323,7 +324,6 @@ export class DataProcesser {
             new THREE.Vector3(1, 0, 0),
             angleR,
         );
-        const localPerpendicularPoint = [...perpendicularPoint];
         const angleW = Utils.angleZToEqualizeX(
             perpendicularPoint[0],
             perpendicularPoint[1],
