@@ -197,41 +197,38 @@ export class DataProcesser {
             planeInstance,
         );
         const farthestPair = DataProcesser.findFarthestPoints(planeContour);
+        const farthestPoint = farthestPair.perpendicularPoint;
         const localIntersectionPoint = farthestPair.map((v) => v.clone());
 
         const angleX = farthestPair.angleR;
         const degR = THREE.MathUtils.radToDeg(angleX);
-        farthestPair[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
-        farthestPair[1].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
         modelGroup.rotateOnAxis(new THREE.Vector3(1, 0, 0), angleX);
 
         const angleZ = farthestPair.angleW;
         const degW = THREE.MathUtils.radToDeg(angleZ);
-        farthestPair[0].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
-        farthestPair[1].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
         group.rotateOnAxis(new THREE.Vector3(0, 0, 1), angleZ);
 
         const { highest, lowest, localHighest, localLowest } =
             Utils.getMeshHighestLowest(mesh);
         const bladeFarPoint = Utils.getFarthestPointsFromLine(
             mesh,
-            farthestPair,
+            farthestPoint,
             midPlane,
         );
         const cameraIntersectionData = FaceExtractor.getCameraData2(
-            farthestPair,
+            farthestPoint,
             highest,
         );
         const cameraIntersectionDataLocal = FaceExtractor.getCameraDataLocal2(
-            farthestPair,
+            farthestPoint,
             localIntersectionPoint,
             localHighest,
         );
         const data = {
             RotationR: 270 - degR,
             RotationW: 90 - degW,
-            IntersectionTop: farthestPair[0].toArray(),
-            IntersectionBottom: farthestPair[1].toArray(),
+            IntersectionTop: farthestPoint[0].toArray(),
+            IntersectionBottom: farthestPoint[1].toArray(),
             LocalIntersectionTop: localIntersectionPoint[0].toArray(),
             LocalIntersectionBottom: localIntersectionPoint[1].toArray(),
             BladeTop: highest.toArray(),
