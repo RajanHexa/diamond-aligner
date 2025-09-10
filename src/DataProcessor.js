@@ -185,7 +185,7 @@ export class DataProcesser {
         const modelGroup = new THREE.Group();
         modelGroup.add(mesh);
         group.add(modelGroup);
-        mesh.geometry.rotateY(Math.PI);
+        // mesh.geometry.rotateY(Math.PI);
         const midPlane = FaceExtractor.extractMidPlane(mesh);
         const planeInstance = new THREE.Plane().setFromNormalAndCoplanarPoint(
             midPlane.normal,
@@ -200,7 +200,7 @@ export class DataProcesser {
         const localIntersectionPoint = farthestPair.map((v) => v.clone());
 
         const angleX = Utils.angleToEqualizeZ(farthestPair[0], farthestPair[1]);
-        const degR = THREE.MathUtils.radToDeg(angleX);
+        const degR = THREE.MathUtils.radToDeg(270 - angleX);
         farthestPair[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
         farthestPair[1].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
         modelGroup.rotateOnAxis(new THREE.Vector3(1, 0, 0), angleX);
@@ -209,7 +209,7 @@ export class DataProcesser {
             farthestPair[0],
             farthestPair[1],
         );
-        const degW = THREE.MathUtils.radToDeg(angleZ);
+        const degW = THREE.MathUtils.radToDeg(90 - angleZ);
         farthestPair[0].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
         farthestPair[1].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
         group.rotateOnAxis(new THREE.Vector3(0, 0, 1), angleZ);
