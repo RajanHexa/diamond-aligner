@@ -336,26 +336,6 @@ export class DataProcesser {
             new THREE.Vector3(0, 0, 1),
             angleW,
         );
-        // create index mapping
-        const indexed = perpendicularPoint.map((world, i) => ({
-            world,
-            local: localIntersectionPoint[i],
-        }));
-
-        // sort only by world.y
-        indexed.sort((a, b) => a.world.y - b.world.y);
-
-        // rewrite arrays in the same sorted order
-        for (let i = 0; i < indexed.length; i++) {
-            perpendicularPoint[i] = indexed[i].world; // sorted world
-            localIntersectionPoint[i] = indexed[i].local; // aligned local
-        }
-
-        return {
-            perpendicularPoint,
-            angleR,
-            angleW,
-            localIntersectionPoint,
-        };
+        return { perpendicularPoint, angleR, angleW, localIntersectionPoint };
     }
 }
