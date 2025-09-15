@@ -46,58 +46,48 @@ export default function AppTest() {
         useState(null);
 
     const handleApply = () => {
-        if (midPlane1 && midPlane2) {
-            const planeInstance1 = new THREE.Plane();
-            planeInstance1.setFromNormalAndCoplanarPoint(
-                midPlane1.normal,
-                midPlane1.centroid,
-            );
-            const planeInstance2 = new THREE.Plane();
-            planeInstance2.setFromNormalAndCoplanarPoint(
-                midPlane2.normal,
-                midPlane2.centroid,
-            );
-            const planeShape = ClipPlane.getIntersectionContour(
-                model1,
-                planeInstance1,
-            );
-            const point = ClipPlane.getContourPlaneIntersection(
-                planeShape,
+        if (!midPlane1 || !midPlane2) return;
+
+        const planeInstance1 = new THREE.Plane().setFromNormalAndCoplanarPoint(
+            midPlane1.normal,
+            midPlane1.centroid,
+        );
+        const planeInstance2 = new THREE.Plane().setFromNormalAndCoplanarPoint(
+            midPlane2.normal,
+            midPlane2.centroid,
+        );
+
+        // Try intersection with model1 first
+        let planeShape = ClipPlane.getIntersectionContour(
+            model1,
+            planeInstance1,
+        );
+        let point = ClipPlane.getContourPlaneIntersection(
+            planeShape,
+            planeInstance2,
+            planeInstance1,
+        );
+
+        // Fallback if no intersection
+        if (point.length === 0) {
+            planeShape = ClipPlane.getIntersectionContour(
+                model2,
                 planeInstance2,
-                planeInstance1,
             );
-            setThreePlane1(planeInstance1);
-            setThreePlane2(planeInstance2);
-            if (point.length == 0) {
-                const planeInstance1 = new THREE.Plane();
-                planeInstance1.setFromNormalAndCoplanarPoint(
-                    midPlane1.normal,
-                    midPlane1.centroid,
-                );
-                const planeInstance2 = new THREE.Plane();
-                planeInstance2.setFromNormalAndCoplanarPoint(
-                    midPlane2.normal,
-                    midPlane2.centroid,
-                );
-                const planeShape = ClipPlane.getIntersectionContour(
-                    model2,
-                    planeInstance2,
-                );
-                const point = ClipPlane.getContourPlaneIntersection(
-                    planeShape,
-                    planeInstance1,
-                    planeInstance2,
-                );
-                setAligned(true);
-                setPoints(point);
-            } else {
-                setAligned(true);
-                setPoints(point);
-            }
-            const copy = point.map((v) => v.clone());
-            setPointsLocal(copy);
-            setBladeIntersection2(point);
+            point = ClipPlane.getContourPlaneIntersection(
+                planeShape,
+                planeInstance1,
+                planeInstance2,
+            );
         }
+
+        // Always clone to local before setting state
+        const copy = point.map((v) => v.clone());
+
+        setAligned(true);
+        setPoints(point);
+        setPointsLocal(copy);
+        setBladeIntersection2(point);
     };
 
     useEffect(() => {
