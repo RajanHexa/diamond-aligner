@@ -12,6 +12,7 @@ export default function AppTest() {
     // ✅ Fix here
     window.processData = DataProcesser.processOBJ;
     window.processSingleBlade = DataProcesser.processSingleBlade;
+    window.processDataFarthestPoint = DataProcesser.processOBJFarthestPoint;
     const cameraControlsRef = useRef();
     const inputRef1 = useRef();
     const inputRef2 = useRef();

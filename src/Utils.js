@@ -336,7 +336,7 @@ export class Utils {
             } else {
                 intersectionClosestPoint = linePoints[1];
             }
-            const angle = this.computeBladeAngle(linePoints[0], farPoint);
+            const angle = this.computeBladeAngle(linePoints, farPoint);
             topPlane.projectPoint(farPoint.clone(), projectedFarPoint);
             distance = intersectionClosestPoint.distanceTo(projectedFarPoint);
             const localProjectedFarthestPoint1 = new THREE.Vector3().copy(
