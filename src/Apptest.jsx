@@ -250,6 +250,7 @@ export default function AppTest() {
             const { top, bottom } = Utils.getTopBottomProjected(
                 planeShape,
                 centroidFarthest,
+                model1,
             );
             setBlade1IntersectionPoints([top, bottom]);
 
@@ -489,7 +490,7 @@ export default function AppTest() {
                                 background: 'rgba(0,0,0,0.6)',
                                 lineHeight: '1.6',
                             }}>
-                            <div>Without Rotation</div>
+                            <div>With Rotation</div>
                             <div>
                                 <strong>Rotation R:</strong>{' '}
                                 {machineRotaryR || '-'}

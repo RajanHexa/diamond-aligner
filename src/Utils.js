@@ -185,9 +185,8 @@ export class Utils {
 
         return { top, bottom };
     }
-
-    static getTopBottomProjected(points, centroid) {
-        if (!points || points.length === 0 || !centroid) {
+    static getTopBottomProjected(points, centroid, model) {
+        if (!points || points.length === 0 || !centroid || !model) {
             return { top: null, bottom: null };
         }
 
@@ -200,8 +199,26 @@ export class Utils {
         }
 
         // Create points with same X,Z as centroid, but Y from top/bottom
-        const top = new THREE.Vector3(centroid.x, maxY, centroid.z);
-        const bottom = new THREE.Vector3(centroid.x, minY, centroid.z);
+        let top = new THREE.Vector3(centroid.x, maxY, centroid.z);
+        let bottom = new THREE.Vector3(centroid.x, minY, centroid.z);
+
+        // 🔹 Raycast from top → centroid
+        const raycaster = new THREE.Raycaster();
+
+        const dirTop = centroid.clone().sub(top).normalize();
+        raycaster.set(top.clone(), dirTop);
+        const topHits = raycaster.intersectObject(model, true);
+        if (topHits.length > 0) {
+            top = topHits[0].point.clone();
+        }
+
+        // 🔹 Raycast from bottom → centroid
+        const dirBottom = centroid.clone().sub(bottom).normalize();
+        raycaster.set(bottom.clone(), dirBottom);
+        const bottomHits = raycaster.intersectObject(model, true);
+        if (bottomHits.length > 0) {
+            bottom = bottomHits[0].point.clone();
+        }
 
         return { top, bottom };
     }
