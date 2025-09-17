@@ -174,6 +174,120 @@ export class Utils {
 
         return { highest, lowest, localHighest, localLowest };
     }
+    static getTopBottomWithMidpoint(points) {
+        if (!points || points.length === 0) {
+            return { top: null, bottom: null, centroid: null };
+        }
+
+        // Get top and bottom by Y
+        let top = points[0].clone();
+        let bottom = points[0].clone();
+
+        for (let p of points) {
+            if (p.y > top.y) top = p.clone();
+            if (p.y < bottom.y) bottom = p.clone();
+        }
+
+        return { top, bottom };
+    }
+
+    static getTopBottomProjected(points, centroid) {
+        if (!points || points.length === 0 || !centroid) {
+            return { top: null, bottom: null };
+        }
+
+        let maxY = -Infinity;
+        let minY = Infinity;
+
+        for (const p of points) {
+            if (p.y > maxY) maxY = p.y;
+            if (p.y < minY) minY = p.y;
+        }
+
+        // Create points with same X,Z as centroid, but Y from top/bottom
+        const top = new THREE.Vector3(centroid.x, maxY, centroid.z);
+        const bottom = new THREE.Vector3(centroid.x, minY, centroid.z);
+
+        return { top, bottom };
+    }
+
+    static getXZAngleWithNegX(top, bottom) {
+        if (!top || !bottom) return null;
+
+        // 1️⃣ Project points onto XZ plane
+        const topXZ = new THREE.Vector3(top.x, 0, top.z);
+        const bottomXZ = new THREE.Vector3(bottom.x, 0, bottom.z);
+
+        // 2️⃣ Vector from bottom → top
+        const vec = new THREE.Vector3().subVectors(topXZ, bottomXZ).normalize();
+
+        // 3️⃣ Negative X-axis vector
+        const negX = new THREE.Vector3(-1, 0, 0);
+
+        // 4️⃣ Angle in radians
+        const angleRad = vec.angleTo(negX);
+        const angleDeg = THREE.MathUtils.radToDeg(angleRad);
+
+        return angleDeg;
+    }
+
+    static getFarthestPointsXZ(points) {
+        if (!points || points.length < 2)
+            return { farthest1: null, farthest2: null };
+
+        let maxDistSq = -Infinity;
+        let farthest1 = null;
+        let farthest2 = null;
+
+        for (let i = 0; i < points.length; i++) {
+            for (let j = i + 1; j < points.length; j++) {
+                // Compute squared distance in XZ plane (ignore y)
+                const dx = points[i].x - points[j].x;
+                const dz = points[i].z - points[j].z;
+                const distSq = dx * dx + dz * dz;
+
+                if (distSq > maxDistSq) {
+                    maxDistSq = distSq;
+                    // clone full 3D point but still return original y values
+                    farthest1 = points[i].clone();
+                    farthest2 = points[j].clone();
+                }
+            }
+        }
+
+        return { farthest1, farthest2 };
+    }
+
+    static restorePointsToOriginal(points, angle, axis = 'x') {
+        if (!points || points.length === 0) return [];
+
+        const axisVector =
+            axis === 'x'
+                ? new THREE.Vector3(1, 0, 0)
+                : axis === 'y'
+                  ? new THREE.Vector3(0, 1, 0)
+                  : new THREE.Vector3(0, 0, 1);
+
+        // Invert the applied rotation (apply negative angle)
+        return points.map((p) => p.clone().applyAxisAngle(axisVector, -angle));
+    }
+
+    static getHighestZPoint(points) {
+        if (!points || points.length === 0) return null;
+
+        let highest = points[0].clone();
+
+        for (const p of points) {
+            if (p.z < highest.z) {
+                highest.copy(p);
+            }
+        }
+        //return three.js vector
+        highest = new THREE.Vector3(highest.x, highest.y, highest.z);
+
+        return highest;
+    }
+
     /**
      * Finds the farthest vertex of a mesh from a given line
      * @param {THREE.Mesh} mesh - The mesh
