@@ -36,6 +36,17 @@ export default function AppTest() {
     const [blade2Data, setBlade2Data] = useState(null);
     // const [blade1Angle, setBlade1Angle] = useState(null);
     // const [blade2Angle, setBlade2Angle] = useState(null);
+    const [blade1Far, setBlade1Far] = useState(null);
+    const [blade1FarPoints, setBlade1FarPoints] = useState(null);
+    const [farthestDistance, setFarthestDistance] = useState(null);
+    const [blade1IntersectionPoints, setBlade1IntersectionPoints] =
+        useState(null);
+    const [lBlade1FarPoints, setLBlade1FarPoints] = useState(null);
+    const [lBlade1IntersectionPoints, setLBlade1IntersectionPoints] =
+        useState(null);
+    const [blade2Far, setBlade2Far] = useState(null);
+    const [blade1Angle, setBlade1Angle] = useState(null);
+    const [blade2Angle, setBlade2Angle] = useState(null);
     const [bladeIntersection1, setBladeIntersection1] = useState(null);
     const [bladeIntersection2, setBladeIntersection2] = useState(null);
     const [bladeContour, setBladeContour] = useState(null);
@@ -194,68 +205,81 @@ export default function AppTest() {
         if (!singleAlign || !angleXSingleAlign) return;
         // const angleX = Utils.angleToEqualizeZ(points[0], points[1]);
         const deg = THREE.MathUtils.radToDeg(angleXSingleAlign);
-        setMachineRotaryR(270 - deg);
+        setMachineRotaryR(deg);
         Utils.animateRotation(
             modelGroupRef.current,
             angleXSingleAlign,
             'x',
         ).then(() => {
-            // const updatedPoints = [...points];
-            // updatedPoints[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
-            // updatedPoints[1].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
-            // setPoints(updatedPoints);
-            // const angleZ = Utils.angleZToEqualizeX(points[0], points[1]);
-            // const deg = THREE.MathUtils.radToDeg(angleZ);
-            // setMachineRotaryW(90 - deg);
-            // Utils.animateRotation(groupRef.current, angleZ, 'z').then(() => {
-            // const updatedPoints = [...points];
-            // updatedPoints[0].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
-            // updatedPoints[1].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
-            // setPoints(updatedPoints);
-            const { highest, lowest, localHighest, localLowest } =
-                Utils.getMeshHighestLowest(model1);
-            // const {
-            //     highest: highest2,
-            //     lowest: lowest2,
-            //     localHighest: localHighest2,
-            //     localLowest: localLowest2,
-            // } = Utils.getMeshHighestLowest(model2);
-            // const line = new THREE.Line3(points[0], points[1]);
-            // const blade1FarPoint = Utils.getFarthestPointFromLine(
-            //     model1,
-            //     line,
-            //     points[0],
-            // );
-            // const blade2FarPoint = Utils.getFarthestPointFromLine(
-            //     model2,
-            //     line,
-            //     points[0],
-            // );
-            // setBlade1Far(blade1FarPoint);
-            // setBlade2Far(blade2FarPoint);
+            const planeInstance1 =
+                new THREE.Plane().setFromNormalAndCoplanarPoint(
+                    midPlane1.normal,
+                    midPlane1.centroid,
+                );
+            //apply rotation to plane instance
+            planeInstance1.normal.applyAxisAngle(
+                new THREE.Vector3(1, 0, 0),
+                angleXSingleAlign,
+            );
+
+            let planeShape = ClipPlane.getIntersectionContour(
+                model1,
+                planeInstance1,
+            );
+
+            const { top: highest, bottom: lowest } =
+                Utils.getTopBottomWithMidpoint(planeShape);
             setBlade1YPoints([highest, lowest]);
-            // setBlade2YPoints([highest2, lowest2]);
-            setBlade1LocalYPoints([localHighest, localLowest]);
-            // setBlade2LocalYPoints([localHighest2, localLowest2]);
-            // const blade1Angle = Utils.computeBladeAngle(
-            //     points,
-            //     blade1FarPoint.point,
-            // );
-            // const blade2Angle = Utils.computeBladeAngle(
-            //     points,
-            //     blade2FarPoint.point,
-            // );
-            // setBlade1Angle(blade1Angle);
-            // setBlade2Angle(blade2Angle);
-            // const data = FaceExtractor.getCameraData2(points, highest);
-            // const dataLocal = FaceExtractor.getCameraDataLocal2(
-            //     points,
-            //     pointsLocal,
-            //     localHighest,
-            // );
-            // setCameraDistanceData(data);
-            // setCameraDistanceDataLocal(dataLocal);
-            // });
+
+            const { farthest1, farthest2 } =
+                Utils.getFarthestPointsXZ(planeShape);
+            setBlade1FarPoints([farthest1, farthest2]);
+
+            if (farthest1 && farthest2) {
+                const dx = farthest1.x - farthest2.x;
+                const dz = farthest1.z - farthest2.z;
+                const xzDistance = Math.sqrt(dx * dx + dz * dz);
+                setFarthestDistance(xzDistance);
+            }
+
+            const centroidFarthest = farthest1
+                .clone()
+                .add(farthest2)
+                .multiplyScalar(0.5);
+            // Assume you already have centroid and contour points
+            const { top, bottom } = Utils.getTopBottomProjected(
+                planeShape,
+                centroidFarthest,
+            );
+            setBlade1IntersectionPoints([top, bottom]);
+
+            const center = highest.clone().add(lowest).multiplyScalar(0.5);
+            const p2 = new THREE.Vector3()
+                .copy(center)
+                .add(new THREE.Vector3(-1, 0, 0).multiplyScalar(500));
+            const farthest = Utils.getHighestZPoint(planeShape);
+
+            const angel = Utils.signedAngleBetweenLinesXZ(farthest, p2, center);
+            setBlade1Angle(angel);
+
+            const restored = Utils.restorePointsToOriginal(
+                [highest, lowest, farthest1, farthest2, top, bottom],
+                angleXSingleAlign,
+                'x',
+            );
+
+            const [
+                highestOrig,
+                lowestOrig,
+                farthest1Orig,
+                farthest2Orig,
+                topOrig,
+                bottomOrig,
+            ] = restored;
+
+            setLBlade1FarPoints([farthest1Orig, farthest2Orig]);
+            setLBlade1IntersectionPoints([topOrig, bottomOrig]);
+            setBlade1LocalYPoints([highestOrig, lowestOrig]);
         });
     }, [singleAlign]);
 
@@ -558,6 +582,62 @@ export default function AppTest() {
                                 </div>
                             )}
 
+                            {blade1Angle && !midPlane2 && (
+                                <div style={{ marginTop: '8px' }}>
+                                    <strong>Blade 1 Angel:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {blade1Angle.toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+
+                            {blade1FarPoints && (
+                                <>
+                                    <div>
+                                        <strong>Farthest Point 1:</strong>{' '}
+                                        <Vec3Display vec={blade1FarPoints[0]} />
+                                    </div>
+                                    <div>
+                                        <strong>Farthest Point 2:</strong>{' '}
+                                        <Vec3Display vec={blade1FarPoints[1]} />
+                                    </div>
+                                </>
+                            )}
+
+                            {farthestDistance && (
+                                <div style={{ marginTop: '8px' }}>
+                                    <strong>Blade 1 Farthest distance:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {farthestDistance.toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+
+                            {blade1IntersectionPoints && (
+                                <>
+                                    <div>
+                                        <strong>Intersection Point 1:</strong>{' '}
+                                        <Vec3Display
+                                            vec={blade1IntersectionPoints[0]}
+                                        />
+                                    </div>
+                                    <div>
+                                        <strong>Intersection Point 2:</strong>{' '}
+                                        <Vec3Display
+                                            vec={blade1IntersectionPoints[1]}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
                             {blade2Data && (
                                 <div style={{ marginTop: '8px' }}>
                                     <strong>Blade 2 Farthest Distance:</strong>{' '}
@@ -738,6 +818,66 @@ export default function AppTest() {
                                 </div>
                             )}
 
+                            {blade1Angle && !midPlane2 && (
+                                <div style={{ marginTop: '8px' }}>
+                                    <strong>Blade 1 Angel:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {blade1Angle.toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+
+                            {lBlade1FarPoints && (
+                                <>
+                                    <div>
+                                        <strong>Farthest Point 1:</strong>{' '}
+                                        <Vec3Display
+                                            vec={lBlade1FarPoints[0]}
+                                        />
+                                    </div>
+                                    <div>
+                                        <strong>Farthest Point 2:</strong>{' '}
+                                        <Vec3Display
+                                            vec={lBlade1FarPoints[1]}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {farthestDistance && (
+                                <div style={{ marginTop: '8px' }}>
+                                    <strong>Blade 1 Farthest distance:</strong>{' '}
+                                    <span
+                                        style={{
+                                            color: '#f87171',
+                                            fontWeight: 'bold',
+                                        }}>
+                                        {farthestDistance.toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+
+                            {lBlade1IntersectionPoints && (
+                                <>
+                                    <div>
+                                        <strong>Intersection Point 1:</strong>{' '}
+                                        <Vec3Display
+                                            vec={lBlade1IntersectionPoints[0]}
+                                        />
+                                    </div>
+                                    <div>
+                                        <strong>Intersection Point 2:</strong>{' '}
+                                        <Vec3Display
+                                            vec={lBlade1IntersectionPoints[1]}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
                             {blade2Data && (
                                 <div style={{ marginTop: '8px' }}>
                                     <strong>Blade 2 Farthest Distance:</strong>{' '}
@@ -872,6 +1012,16 @@ export default function AppTest() {
                         </Sphere>
                         <Sphere position={blade1YPoints[1]} args={[50]}>
                             <meshBasicMaterial color={0xff0000} />
+                        </Sphere>
+                    </>
+                )}
+                {blade1FarPoints && (
+                    <>
+                        <Sphere position={blade1FarPoints[0]} args={[50]}>
+                            <meshBasicMaterial color={0xffff00} />
+                        </Sphere>
+                        <Sphere position={blade1FarPoints[1]} args={[50]}>
+                            <meshBasicMaterial color={0xffff00} />
                         </Sphere>
                     </>
                 )}
