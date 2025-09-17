@@ -1015,6 +1015,20 @@ export default function AppTest() {
                         </Sphere>
                     </>
                 )}
+                {blade1IntersectionPoints && (
+                    <>
+                        <Sphere
+                            position={blade1IntersectionPoints[0]}
+                            args={[50]}>
+                            <meshBasicMaterial color={0x0000ff} />
+                        </Sphere>
+                        <Sphere
+                            position={blade1IntersectionPoints[1]}
+                            args={[50]}>
+                            <meshBasicMaterial color={0x0000ff} />
+                        </Sphere>
+                    </>
+                )}
                 {blade1FarPoints && (
                     <>
                         <Sphere position={blade1FarPoints[0]} args={[50]}>
