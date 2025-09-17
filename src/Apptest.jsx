@@ -23,6 +23,7 @@ export default function AppTest() {
     const [midPlane1, setMidPlane1] = useState(null);
     const [midPlane2, setMidPlane2] = useState(null);
     const [aligned, setAligned] = useState(null);
+    const [singleAlign, setSingleAlign] = useState(false);
     const [points, setPoints] = useState(null);
     const [machineRotaryR, setMachineRotaryR] = useState(null);
     const [machineRotaryW, setMachineRotaryW] = useState(null);
@@ -44,10 +45,24 @@ export default function AppTest() {
     const [threePlane2, setThreePlane2] = useState(null);
     const [cameraDistanceDataLocal, setCameraDistanceDataLocal] =
         useState(null);
+    const [angleXSingleAlign, setAngleXSingleAlign] = useState(null);
 
-    const handleApply = () => {
-        if (!midPlane1 || !midPlane2) return;
+    const handleSingleAlign = () => {
+        const planeInstance1 = new THREE.Plane().setFromNormalAndCoplanarPoint(
+            midPlane1.normal,
+            midPlane1.centroid,
+        );
 
+        const normal = planeInstance1.normal.clone().normalize();
+
+        // Angle to rotate around X
+        const angleX = Math.atan2(normal.y, normal.z);
+
+        setSingleAlign(true);
+        setAngleXSingleAlign(angleX);
+    };
+
+    const handleMultipleAlign = () => {
         const planeInstance1 = new THREE.Plane().setFromNormalAndCoplanarPoint(
             midPlane1.normal,
             midPlane1.centroid,
@@ -88,6 +103,15 @@ export default function AppTest() {
         setPoints(point);
         setPointsLocal(copy);
         setBladeIntersection2(point);
+    };
+
+    const handleApply = () => {
+        if (!midPlane1) return;
+        if (!midPlane2) {
+            handleSingleAlign();
+        } else {
+            handleMultipleAlign();
+        }
     };
 
     useEffect(() => {
@@ -165,6 +189,75 @@ export default function AppTest() {
             });
         });
     }, [aligned]);
+
+    useEffect(() => {
+        if (!singleAlign || !angleXSingleAlign) return;
+        // const angleX = Utils.angleToEqualizeZ(points[0], points[1]);
+        const deg = THREE.MathUtils.radToDeg(angleXSingleAlign);
+        setMachineRotaryR(270 - deg);
+        Utils.animateRotation(
+            modelGroupRef.current,
+            angleXSingleAlign,
+            'x',
+        ).then(() => {
+            // const updatedPoints = [...points];
+            // updatedPoints[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
+            // updatedPoints[1].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
+            // setPoints(updatedPoints);
+            // const angleZ = Utils.angleZToEqualizeX(points[0], points[1]);
+            // const deg = THREE.MathUtils.radToDeg(angleZ);
+            // setMachineRotaryW(90 - deg);
+            // Utils.animateRotation(groupRef.current, angleZ, 'z').then(() => {
+            // const updatedPoints = [...points];
+            // updatedPoints[0].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
+            // updatedPoints[1].applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ);
+            // setPoints(updatedPoints);
+            const { highest, lowest, localHighest, localLowest } =
+                Utils.getMeshHighestLowest(model1);
+            // const {
+            //     highest: highest2,
+            //     lowest: lowest2,
+            //     localHighest: localHighest2,
+            //     localLowest: localLowest2,
+            // } = Utils.getMeshHighestLowest(model2);
+            // const line = new THREE.Line3(points[0], points[1]);
+            // const blade1FarPoint = Utils.getFarthestPointFromLine(
+            //     model1,
+            //     line,
+            //     points[0],
+            // );
+            // const blade2FarPoint = Utils.getFarthestPointFromLine(
+            //     model2,
+            //     line,
+            //     points[0],
+            // );
+            // setBlade1Far(blade1FarPoint);
+            // setBlade2Far(blade2FarPoint);
+            setBlade1YPoints([highest, lowest]);
+            // setBlade2YPoints([highest2, lowest2]);
+            setBlade1LocalYPoints([localHighest, localLowest]);
+            // setBlade2LocalYPoints([localHighest2, localLowest2]);
+            // const blade1Angle = Utils.computeBladeAngle(
+            //     points,
+            //     blade1FarPoint.point,
+            // );
+            // const blade2Angle = Utils.computeBladeAngle(
+            //     points,
+            //     blade2FarPoint.point,
+            // );
+            // setBlade1Angle(blade1Angle);
+            // setBlade2Angle(blade2Angle);
+            // const data = FaceExtractor.getCameraData2(points, highest);
+            // const dataLocal = FaceExtractor.getCameraDataLocal2(
+            //     points,
+            //     pointsLocal,
+            //     localHighest,
+            // );
+            // setCameraDistanceData(data);
+            // setCameraDistanceDataLocal(dataLocal);
+            // });
+        });
+    }, [singleAlign]);
 
     const handleFitToView = () => {
         const box = new THREE.Box3();
