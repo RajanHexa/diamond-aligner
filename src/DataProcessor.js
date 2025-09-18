@@ -349,85 +349,114 @@ export class DataProcesser {
         return data;
     }
     static async processSingleBlade(url) {
-        const blobUrl = URL.createObjectURL(new Blob([url]));
-        const mesh = await Utils.loadObjModel(blobUrl);
+        const blobUrl1 = URL.createObjectURL(new Blob([url]));
+        const mesh1 = await Utils.loadObjModel(blobUrl1);
+        mesh1.geometry.rotateY(Math.PI);
+
         const group = new THREE.Group();
         const modelGroup = new THREE.Group();
-        modelGroup.add(mesh);
+        modelGroup.add(mesh1);
         group.add(modelGroup);
-        mesh.geometry.rotateY(Math.PI);
-        const midPlane = FaceExtractor.extractMidPlane(mesh);
-        const planeInstance = new THREE.Plane().setFromNormalAndCoplanarPoint(
-            midPlane.normal,
-            midPlane.centroid,
-        );
-        // === Intersection points ===
-        const planeContour = ClipPlane.getIntersectionContour(
-            mesh,
-            planeInstance,
-        );
-        const farthestPair = DataProcesser.findFarthestPoints(
-            mesh,
-            planeContour,
-            midPlane,
-        );
-        const farthestPoint = farthestPair.perpendicularPoint;
-        const localIntersectionPoint = farthestPair.localIntersectionPoint.map(
-            (v) => v.clone(),
-        );
 
-        const angleX = farthestPair.angleR;
+        // === Plane setup ===
+        const midPlane1 = FaceExtractor.extractMidPlane(mesh1);
+        if (!midPlane1) {
+            console.log('processSingleOBJ: midplane invalid');
+            return null;
+        }
+
+        // Angle to rotate around X
+        const normal = midPlane1.normal.clone().normalize();
+        const angleX = Math.atan2(normal.y, normal.z);
         const degR = THREE.MathUtils.radToDeg(angleX);
-        modelGroup.rotateOnAxis(new THREE.Vector3(1, 0, 0), angleX);
 
-        const angleZ = farthestPair.angleW;
-        const degW = THREE.MathUtils.radToDeg(angleZ);
-        group.rotateOnAxis(new THREE.Vector3(0, 0, 1), angleZ);
+        // Rotate geometry vertices around X
+        const rotationMatrix = new THREE.Matrix4().makeRotationX(angleX);
+        mesh1.geometry.applyMatrix4(rotationMatrix);
 
-        const { highest, lowest, localHighest, localLowest } =
-            Utils.getMeshHighestLowest(mesh);
-        const bladeFarPoint = Utils.getFarthestPointsFromLine(
-            mesh,
-            farthestPoint,
-            midPlane,
+        // Now the vertices are rotated physically in local space
+        // No need to rotate plane separately; just create plane in rotated mesh space
+        const planeInstance1 = new THREE.Plane().setFromNormalAndCoplanarPoint(
+            midPlane1.normal
+                .clone()
+                .applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX),
+            midPlane1.centroid
+                .clone()
+                .applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX),
         );
-        const cameraIntersectionData = FaceExtractor.getCameraData2(
-            farthestPoint,
-            highest,
+
+        const planeShape = ClipPlane.getIntersectionContour(
+            mesh1,
+            planeInstance1,
         );
-        const cameraIntersectionDataLocal = FaceExtractor.getCameraDataLocal2(
-            farthestPoint,
-            localIntersectionPoint,
-            localHighest,
+
+        const { top: highest, bottom: lowest } =
+            Utils.getTopBottomWithMidpoint(planeShape);
+
+        // === Farthest points in XZ ===
+        const { farthest1, farthest2 } = Utils.getFarthestPointsXZ(planeShape);
+
+        let farthestDistance = null;
+        if (farthest1 && farthest2) {
+            const dx = farthest1.x - farthest2.x;
+            const dz = farthest1.z - farthest2.z;
+            farthestDistance = Math.sqrt(dx * dx + dz * dz);
+        }
+
+        // === Projected top/bottom with centroid ===
+        const centroidFarthest = farthest1
+            .clone()
+            .add(farthest2)
+            .multiplyScalar(0.5);
+        const { top, bottom } = Utils.getTopBottomProjected(
+            planeShape,
+            centroidFarthest,
         );
+
+        // === Angle calculation ===
+        const center = highest.clone().add(lowest).multiplyScalar(0.5);
+        const p2 = new THREE.Vector3()
+            .copy(center)
+            .add(new THREE.Vector3(-1, 0, 0).multiplyScalar(500));
+        const farthest = Utils.getHighestZPoint(planeShape);
+        const angle = Utils.signedAngleBetweenLinesXZ(farthest, p2, center);
+
+        // === Restore to original ===
+        const restored = Utils.restorePointsToOriginal(
+            [highest, lowest, farthest1, farthest2, top, bottom],
+            angleX,
+            'x',
+        );
+
+        const [
+            highestOrig,
+            lowestOrig,
+            farthest1Orig,
+            farthest2Orig,
+            topOrig,
+            bottomOrig,
+        ] = restored;
+
+        // === Construct result ===
         const data = {
-            RotationR: 270 - degR,
-            RotationW: 90 - degW,
-            IntersectionTop: farthestPoint[0].toArray(),
-            IntersectionBottom: farthestPoint[1].toArray(),
-            LocalIntersectionTop: localIntersectionPoint[0].toArray(),
-            LocalIntersectionBottom: localIntersectionPoint[1].toArray(),
-            BladeTop: highest.toArray(),
-            BladeBottom: lowest.toArray(),
-            BladeFarthestPoint1: bladeFarPoint.farPoint1.toArray(),
-            BladeFarthestPoint2: bladeFarPoint.farPoint2.toArray(),
-            BladeLocalFarthestPoint1: bladeFarPoint.localPoint1.toArray(),
-            BladeLocalFarthestPoint2: bladeFarPoint.localPoint2.toArray(),
-            BladeFarDistance: bladeFarPoint.distance,
-            BladeAngle: bladeFarPoint.deg,
-            BladeLocalTop: localHighest.toArray(),
-            BladeLocalBottom: localLowest.toArray(),
-            CameraIntersectionDistance:
-                cameraIntersectionData.cameraDistanceIntersection.toFixed(2),
-            CameraDistanceToFarPoint:
-                cameraIntersectionData.cameraDistanceToTopPoint.toFixed(2),
-            CameraIntersectionDistanceLocal:
-                cameraIntersectionDataLocal.cameraDistanceIntersection.toFixed(
-                    2,
-                ),
-            CameraDistanceToFarPointLocal:
-                cameraIntersectionDataLocal.cameraDistanceToTopPoint.toFixed(2),
+            RotationR: degR,
+            Highest: highest.toArray(),
+            Lowest: lowest.toArray(),
+            LocalHighest: highestOrig.toArray(),
+            LocalLowest: lowestOrig.toArray(),
+            Farthest1: farthest1?.toArray() ?? null,
+            Farthest2: farthest2?.toArray() ?? null,
+            LocalFarthest1: farthest1Orig?.toArray() ?? null,
+            LocalFarthest2: farthest2Orig?.toArray() ?? null,
+            FarthestDistance: farthestDistance,
+            IntersectionTop: top?.toArray() ?? null,
+            IntersectionBottom: bottom?.toArray() ?? null,
+            LocalIntersectionTop: topOrig?.toArray() ?? null,
+            LocalIntersectionBottom: bottomOrig?.toArray() ?? null,
+            BladeAngle: angle,
         };
+
+        console.log('processSingleOBJ: final data', data);
         return data;
     }
 
