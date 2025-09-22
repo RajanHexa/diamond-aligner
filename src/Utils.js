@@ -454,7 +454,7 @@ export class Utils {
             topPlane.projectPoint(farPoint.clone(), projectedFarPoint);
             distance = intersectionClosestPoint.distanceTo(projectedFarPoint);
             const localProjectedFarthestPoint1 = new THREE.Vector3().copy(
-                farthestRight.clone(),
+                farPoint.clone(),
             );
             localProjectedFarthestPoint1.applyMatrix4(invertMatrix.clone());
             return {
