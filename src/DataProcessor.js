@@ -178,6 +178,201 @@ export class DataProcesser {
         console.log('processOBJ: final data', data);
         return data;
     }
+
+    static async processOBJFromPoint(url1, url2, pivotPoint) {
+        function rotateAroundPoint(object, axis, angle, pivot) {
+            const m = new THREE.Matrix4();
+            const mInv = new THREE.Matrix4();
+
+            m.makeTranslation(-pivot.x, -pivot.y, -pivot.z);
+            mInv.makeTranslation(pivot.x, pivot.y, pivot.z);
+
+            const rot = new THREE.Matrix4().makeRotationAxis(
+                axis.normalize(),
+                angle,
+            );
+
+            object.applyMatrix4(mInv.multiply(rot).multiply(m));
+            object.updateMatrixWorld(true);
+        }
+
+        console.log('processOBJ: start');
+
+        const blobUrl1 = URL.createObjectURL(new Blob([url1]));
+        const blobUrl2 = URL.createObjectURL(new Blob([url2]));
+        console.log('processOBJ: blob urls created');
+
+        const mesh1 = await Utils.loadObjModel(blobUrl1);
+        const mesh2 = await Utils.loadObjModel(blobUrl2);
+        const group = new THREE.Group();
+        const modelGroup = new THREE.Group();
+        modelGroup.add(mesh1);
+        modelGroup.add(mesh2);
+        group.add(modelGroup);
+        console.log('processOBJ: meshes loaded');
+
+        mesh1.geometry.rotateY(Math.PI);
+        mesh2.geometry.rotateY(Math.PI);
+        console.log('processOBJ: meshes rotated');
+
+        const midPlane1 = FaceExtractor.extractMidPlane(mesh1);
+        const midPlane2 = FaceExtractor.extractMidPlane(mesh2);
+        if (!(midPlane1 && midPlane2)) {
+            console.log('processOBJ: midplanes invalid');
+            return null;
+        }
+
+        // Plane setup
+        const plane1 = new THREE.Plane().setFromNormalAndCoplanarPoint(
+            midPlane1.normal,
+            midPlane1.centroid,
+        );
+        const plane2 = new THREE.Plane().setFromNormalAndCoplanarPoint(
+            midPlane2.normal,
+            midPlane2.centroid,
+        );
+
+        // Intersection points
+        let intersectionPoints = ClipPlane.getContourPlaneIntersection(
+            ClipPlane.getIntersectionContour(mesh1, plane1),
+            plane2,
+            plane1,
+        );
+        if (intersectionPoints.length === 0) {
+            intersectionPoints = ClipPlane.getContourPlaneIntersection(
+                ClipPlane.getIntersectionContour(mesh2, plane2),
+                plane1,
+                plane2,
+            );
+        }
+        const localIntersectionPoints = intersectionPoints.map((v) =>
+            v.clone(),
+        );
+
+        // === X rotation (same as before) ===
+        const angleX = Utils.angleToEqualizeZ(
+            intersectionPoints[0],
+            intersectionPoints[1],
+        );
+        intersectionPoints[0].applyAxisAngle(
+            new THREE.Vector3(1, 0, 0),
+            angleX,
+        );
+        intersectionPoints[1].applyAxisAngle(
+            new THREE.Vector3(1, 0, 0),
+            angleX,
+        );
+        modelGroup.rotateOnAxis(new THREE.Vector3(1, 0, 0), angleX);
+        const degR = THREE.MathUtils.radToDeg(angleX);
+
+        // === Z rotation (pivot-based, updated logic) ===
+        const pivot = new THREE.Vector3(
+            pivotPoint[0],
+            pivotPoint[1],
+            pivotPoint[2],
+        );
+        const angleZ = Utils.getAngleZ(pivot, intersectionPoints);
+        const degW = THREE.MathUtils.radToDeg(angleZ);
+
+        // Apply rotation around pivot
+        intersectionPoints[0] = intersectionPoints[0]
+            .clone()
+            .sub(pivot)
+            .applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ)
+            .add(pivot);
+        intersectionPoints[1] = intersectionPoints[1]
+            .clone()
+            .sub(pivot)
+            .applyAxisAngle(new THREE.Vector3(0, 0, 1), angleZ)
+            .add(pivot);
+        rotateAroundPoint(group, new THREE.Vector3(0, 0, 1), angleZ, pivot);
+
+        // Mesh highest/lowest
+        const {
+            highest: highest1,
+            lowest: lowest1,
+            localHighest,
+            localLowest,
+        } = Utils.getMeshHighestLowest(mesh1);
+        const {
+            highest: highest2,
+            lowest: lowest2,
+            localHighest: localHighest2,
+            localLowest: localLowest2,
+        } = Utils.getMeshHighestLowest(mesh2);
+
+        // Farthest points & blade angles
+        const line = new THREE.Line3(
+            intersectionPoints[0],
+            intersectionPoints[1],
+        );
+        const blade1FarPoint = Utils.getFarthestPointFromLine(
+            mesh1,
+            line,
+            intersectionPoints[0],
+        );
+        const blade2FarPoint = Utils.getFarthestPointFromLine(
+            mesh2,
+            line,
+            intersectionPoints[0],
+        );
+        const blade1Angle = Utils.computeBladeAngle(
+            intersectionPoints,
+            blade1FarPoint.point,
+        );
+        const blade2Angle = Utils.computeBladeAngle(
+            intersectionPoints,
+            blade2FarPoint.point,
+        );
+
+        // Camera data
+        const cameraData = FaceExtractor.getCameraData(
+            intersectionPoints,
+            highest1,
+            highest2,
+        );
+        const cameraDataLocal = FaceExtractor.getCameraDataLocal(
+            intersectionPoints,
+            localIntersectionPoints,
+            localHighest,
+            localHighest2,
+        );
+
+        // Construct final data
+        return {
+            RotationR: 270 - degR,
+            RotationW: 90 - degW,
+            IntersectionTop: intersectionPoints[0].toArray(),
+            IntersectionBottom: intersectionPoints[1].toArray(),
+            LocalIntersectionTop: localIntersectionPoints[0].toArray(),
+            LocalIntersectionBottom: localIntersectionPoints[1].toArray(),
+            Blade1Top: highest1.toArray(),
+            Blade1Bottom: lowest1.toArray(),
+            Blade1FarthestPoint: blade1FarPoint.point.toArray(),
+            Blade1LocalFarthestPoint: blade1FarPoint.localPoint.toArray(),
+            Blade1FarDistance: blade1Angle.distance,
+            Blade1Angle: blade1Angle.deg,
+            Blade2Top: highest2.toArray(),
+            Blade2Bottom: lowest2.toArray(),
+            Blade2FarthestPoint: blade2FarPoint.point.toArray(),
+            Blade2LocalFarthestPoint: blade2FarPoint.localPoint.toArray(),
+            Blade2FarDistance: blade2Angle.distance,
+            Blade2Angle: blade2Angle.deg,
+            Blade1LocalTop: localHighest.toArray(),
+            Blade1LocalBottom: localLowest.toArray(),
+            Blade2LocalTop: localHighest2.toArray(),
+            Blade2LocalBottom: localLowest2.toArray(),
+            CameraIntersectionDistance:
+                cameraData.cameraDistanceIntersection.toFixed(2),
+            CameraDistanceToFarPoint:
+                cameraData.cameraDistanceToTopPoint.toFixed(2),
+            CameraIntersectionDistanceLocal:
+                cameraDataLocal.cameraDistanceIntersection.toFixed(2),
+            CameraDistanceToFarPointLocal:
+                cameraDataLocal.cameraDistanceToTopPoint.toFixed(2),
+        };
+    }
+
     static async processOBJFarthestPoint(url1, url2) {
         console.log('processOBJ: start');
 
