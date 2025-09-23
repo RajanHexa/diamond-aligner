@@ -49,6 +49,54 @@ export class Utils {
             });
         });
     }
+    static animateRotationAroundPoint(
+        object,
+        axis,
+        angle,
+        pivot,
+        duration = 1,
+    ) {
+        return new Promise((resolve) => {
+            const axisVector = (() => {
+                if (axis === 'x') return new THREE.Vector3(1, 0, 0);
+                if (axis === 'y') return new THREE.Vector3(0, 1, 0);
+                if (axis === 'z') return new THREE.Vector3(0, 0, 1);
+                return new THREE.Vector3(0, 0, 1); // fallback
+            })().normalize();
+
+            const startQuat = object.quaternion.clone(); // store initial rotation
+            const startPos = object.position.clone(); // store initial position
+            const q = new THREE.Quaternion();
+
+            gsap.to(
+                { t: 0 },
+                {
+                    t: angle,
+                    duration,
+                    ease: 'power2.inOut',
+                    onUpdate: function () {
+                        const currentAngle = this.targets()[0].t;
+                        q.setFromAxisAngle(axisVector, currentAngle);
+
+                        if (pivot) {
+                            // rotate relative to initial position
+                            const pos = startPos
+                                .clone()
+                                .sub(pivot)
+                                .applyQuaternion(q)
+                                .add(pivot);
+                            object.position.copy(pos);
+                        }
+
+                        // rotate relative to initial rotation
+                        object.quaternion.copy(startQuat).multiply(q);
+                    },
+                    onComplete: resolve,
+                },
+            );
+        });
+    }
+
     static angleToEqualizeZ(p1, p2) {
         // p1 and p2 are THREE.Vector3
         const y1 = p1.y,
@@ -64,6 +112,27 @@ export class Utils {
         const x2 = p2.x,
             y2 = p2.y;
         return Math.atan2(x1 - x2, y1 - y2); // radians
+    }
+    static getAngleZ(pivotPoint, updatedPoints) {
+        if (!pivotPoint || !updatedPoints || updatedPoints.length < 2) {
+            throw new Error(
+                'Invalid input: pivotPoint and two updatedPoints are required.',
+            );
+        }
+
+        // Relative positions to pivot
+        const A_rel = updatedPoints[0].clone().sub(pivotPoint);
+        const B_rel = updatedPoints[1].clone().sub(pivotPoint);
+
+        // Compute angle in XY plane
+        const dx = B_rel.x - A_rel.x;
+        const dy = B_rel.y - A_rel.y;
+        let angleZ = Math.atan2(dx, dy);
+
+        // Flip the angle to rotate from the "other side"
+        angleZ = angleZ > 0 ? angleZ - Math.PI : angleZ + Math.PI;
+
+        return angleZ;
     }
     static getPlanesIntersectionLine(plane1, plane2) {
         // Direction of the intersection line
@@ -478,7 +547,7 @@ export class Utils {
             topPlane.projectPoint(farPoint.clone(), projectedFarPoint);
             distance = intersectionClosestPoint.distanceTo(projectedFarPoint);
             const localProjectedFarthestPoint1 = new THREE.Vector3().copy(
-                farthestRight.clone(),
+                farPoint.clone(),
             );
             localProjectedFarthestPoint1.applyMatrix4(invertMatrix.clone());
             return {

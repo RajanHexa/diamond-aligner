@@ -58,6 +58,8 @@ export default function AppTest() {
         useState(null);
     const [angleXSingleAlign, setAngleXSingleAlign] = useState(null);
 
+    const pivotPoint = new THREE.Vector3(-10000, 0, 0);
+
     const handleSingleAlign = () => {
         const planeInstance1 = new THREE.Plane().setFromNormalAndCoplanarPoint(
             midPlane1.normal,
@@ -135,20 +137,32 @@ export default function AppTest() {
             updatedPoints[0].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
             updatedPoints[1].applyAxisAngle(new THREE.Vector3(1, 0, 0), angleX);
             setPoints(updatedPoints);
-            const angleZ = Utils.angleZToEqualizeX(points[0], points[1]);
+
+            const pivot = pivotPoint.clone();
+            const angleZ = Utils.getAngleZ(pivot, updatedPoints);
             const deg = THREE.MathUtils.radToDeg(angleZ);
             setMachineRotaryW(90 - deg);
-            Utils.animateRotation(groupRef.current, angleZ, 'z').then(() => {
-                const updatedPoints = [...points];
-                updatedPoints[0].applyAxisAngle(
-                    new THREE.Vector3(0, 0, 1),
-                    angleZ,
-                );
-                updatedPoints[1].applyAxisAngle(
-                    new THREE.Vector3(0, 0, 1),
-                    angleZ,
-                );
-                setPoints(updatedPoints);
+            Utils.animateRotationAroundPoint(
+                groupRef.current,
+                new THREE.Vector3(0, 0, 1), // Z-axis
+                angleZ,
+                pivot,
+            ).then(() => {
+                const rotatedPoints = [...updatedPoints];
+                const axisZ = new THREE.Vector3(0, 0, 1);
+
+                rotatedPoints[0] = rotatedPoints[0]
+                    .clone()
+                    .sub(pivot)
+                    .applyAxisAngle(axisZ, angleZ)
+                    .add(pivot);
+                rotatedPoints[1] = rotatedPoints[1]
+                    .clone()
+                    .sub(pivot)
+                    .applyAxisAngle(axisZ, angleZ)
+                    .add(pivot);
+
+                setPoints(rotatedPoints);
                 const { highest, lowest, localHighest, localLowest } =
                     Utils.getMeshHighestLowest(model1);
                 const {
@@ -185,12 +199,12 @@ export default function AppTest() {
                 // setBlade1Angle(blade1Angle);
                 // setBlade2Angle(blade2Angle);
                 const data = FaceExtractor.getCameraData(
-                    points,
+                    rotatedPoints,
                     highest,
                     highest2,
                 );
                 const dataLocal = FaceExtractor.getCameraDataLocal(
-                    points,
+                    rotatedPoints,
                     pointsLocal,
                     localHighest,
                     localHighest2,
@@ -1078,6 +1092,11 @@ export default function AppTest() {
                         </Sphere>
                     </>
                 )}
+                <>
+                    <Sphere position={pivotPoint} args={[100]}>
+                        <meshBasicMaterial color={0x00ff00} />
+                    </Sphere>
+                </>
                 <group ref={groupRef}>
                     <group ref={modelGroupRef}>
                         {model1 && <LoadModel mesh={model1} color={0x00ff00} />}
