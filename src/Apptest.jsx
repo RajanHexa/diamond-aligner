@@ -11,6 +11,7 @@ import { DataProcesser } from './DataProcessor';
 export default function AppTest() {
     // ✅ Fix here
     window.processData = DataProcesser.processOBJ;
+    window.processOBJFromPoint = DataProcesser.processOBJFromPoint;
     window.processSingleBlade = DataProcesser.processSingleBlade;
     window.processDataFarthestPoint = DataProcesser.processOBJFarthestPoint;
     const cameraControlsRef = useRef();

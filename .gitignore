@@ -34,6 +34,7 @@ yarn-error.log*
 # next-pwa
 /public/workbox-*.js
 /public/sw.js
+/public/RX-5-ALIGNED
 
 report.*.json
 
